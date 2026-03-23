@@ -10,7 +10,7 @@ const SUIT_EMOJI: Record<string, string> = { hearts: '♥', diamonds: '♦', clu
 
 function resolveActionMsg(action: { key: string; params?: Record<string, string | number> }, t: Translations, interpolate: (str: string, params: Record<string, string | number>) => string): string {
   const parts = action.key.split('.');
-  const template = parts.length === 2 ? (t as Record<string, Record<string, string>>)[parts[0]]?.[parts[1]] : undefined;
+  const template = parts.length === 2 ? (t as unknown as Record<string, Record<string, string>>)[parts[0]]?.[parts[1]] : undefined;
   if (!template) return action.key;
   const resolved: Record<string, string | number> = {};
   for (const [k, v] of Object.entries(action.params ?? {})) {
@@ -38,9 +38,26 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicI
   const { t, interpolate } = useTranslation();
   const [selectedCardIds, setSelectedCardIds] = useState<Set<string>>(new Set());
   const [discardExpanded, setDiscardExpanded] = useState(false);
+  const [visibleDiscardCount, setVisibleDiscardCount] = useState(1);
   const [newCardIds, setNewCardIds] = useState<Set<string>>(new Set());
   const prevHandIdsRef = useRef<Set<string>>(new Set());
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const gameCenterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = gameCenterRef.current;
+    if (!el) return;
+    const compute = () => {
+      const w = el.offsetWidth;
+      const STOCK_LANE_W = 90;
+      const CARD_SLOT_W = w <= 480 ? 56 : 68;
+      setVisibleDiscardCount(Math.max(1, Math.min(8, Math.floor((w - STOCK_LANE_W) / CARD_SLOT_W))));
+    };
+    compute();
+    const ro = new ResizeObserver(compute);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     const currentIds = new Set(hand.map((c) => c.id));
@@ -225,7 +242,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicI
       </div>
 
       {/* Center: stock + discard */}
-      <div className="game-center">
+      <div className="game-center" ref={gameCenterRef}>
         <div className="stock-area">
           <div className={`card card-back${myTurn && gameState.turnPhase === 'mustDraw' ? ' card-clickable' : ''}`} onClick={() => myTurn && gameState.turnPhase === 'mustDraw' && onDrawFromStock()} title={t.game.drawFromStockTitle}>
             <span className="stock-count">{gameState.stockCount}</span>
@@ -243,7 +260,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicI
           onDrop={handleDropOnDiscard}
         >
           <div
-            className={`discard-top-card${gameState.discardPile.length > 0 ? ' card-clickable' : ''}`}
+            className={`discard-inline-cards${gameState.discardPile.length > 0 ? ' card-clickable' : ''}`}
             onClick={() => {
               if (gameState.discardPile.length === 0) return;
               if (myTurn && gameState.turnPhase === 'mustDraw') {
@@ -254,11 +271,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicI
             }}
             title={gameState.discardPile.length > 0 ? (myTurn && gameState.turnPhase === 'mustDraw' ? t.game.takeDiscardTitle : t.game.viewDiscardTitle) : t.game.emptyDiscardTitle}
           >
-            {gameState.discardPile.length > 0 ? <CardView card={gameState.discardPile[gameState.discardPile.length - 1]} /> : <div className="card card-empty" />}
+            {gameState.discardPile.length > 0 ? gameState.discardPile.slice(-visibleDiscardCount).map((card) => <CardView key={card.id} card={card} />) : <div className="card card-empty" />}
           </div>
           <span className="pile-label">
             {interpolate(t.game.discardPile, { count: gameState.discardPile.length })}
-            {gameState.discardPile.length > 1 && (
+            {gameState.discardPile.length > visibleDiscardCount && (
               <button className="btn-expand" onClick={() => setDiscardExpanded((v) => !v)}>
                 {discardExpanded ? '▲' : '▼'}
               </button>

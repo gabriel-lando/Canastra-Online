@@ -986,13 +986,17 @@ body,
 .btn-expand:hover {
   color: var(--gold);
 }
-.discard-top-card {
+.discard-inline-cards {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 4px;
   cursor: default;
 }
-.discard-top-card.card-clickable {
+.discard-inline-cards.card-clickable {
   cursor: pointer;
 }
-.discard-drop-over .discard-top-card,
+.discard-drop-over .discard-inline-cards,
 .discard-drop-over > .card-empty {
   outline: 3px dashed var(--gold);
   outline-offset: 3px;

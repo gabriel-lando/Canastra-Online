@@ -43,6 +43,22 @@ function App() {
 
   const errorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Scale the page so viewports wider than 2560px (4K at 100% OS scaling, etc.)
+  // look like a 1440p (2560px-wide) display.
+  useEffect(() => {
+    const applyZoom = () => {
+      const w = window.innerWidth;
+      if (w > 2560) {
+        document.documentElement.style.zoom = String(w / 2560);
+      } else {
+        document.documentElement.style.removeProperty('zoom');
+      }
+    };
+    applyZoom();
+    window.addEventListener('resize', applyZoom);
+    return () => window.removeEventListener('resize', applyZoom);
+  }, []);
+
   const showError = useCallback((msg: string) => {
     // Store the raw key or message — resolveMessage() translates at render time
     setErrorMsg(msg);
