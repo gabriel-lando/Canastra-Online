@@ -59,6 +59,7 @@ export interface GameState {
   roundSummary?: RoundSummary;
   lastRoundPublicId?: string;
   takenSingleDiscardCardId?: string;
+  disconnectDeadlines?: Record<string, number>; // publicId → deadline timestamp (ms)
 }
 
 export interface RoundSummary {

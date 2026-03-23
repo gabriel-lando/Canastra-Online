@@ -41,6 +41,7 @@ export interface Translations {
     youAreLeader: string;
     vs: string;
     leaderHint: string;
+    selectedPlayerHint: string;
     ready: string;
     cancelReady: string;
     allReady: string;
@@ -59,6 +60,8 @@ export interface Translations {
     title: string;
     message: string;
     roomCode: string;
+    countdown: string;
+    cancelledTitle: string;
   };
   game: {
     inHole: string;
@@ -184,7 +187,8 @@ export const en: Translations = {
     roomCode: 'Room code:',
     youAreLeader: '👑 You are the leader',
     vs: 'VS',
-    leaderHint: '👑 Leader: drag between teams to move • drag within a team to reorder • click team name to rename • ✕ to remove',
+    leaderHint: '👑 Leader: drag (desktop) or tap (mobile) slots to move/reorder • tap team name to rename • ✕ to remove',
+    selectedPlayerHint: 'Moving {name} — tap another slot or team panel to place',
     ready: '✅ Ready',
     cancelReady: '↩ Cancel Ready',
     allReady: '🚀 Everyone ready! Starting game...',
@@ -205,6 +209,8 @@ export const en: Translations = {
     title: '⏸ Game Paused',
     message: 'A player disconnected. Waiting for reconnection...',
     roomCode: 'Room code:',
+    countdown: 'Match cancels in {time}',
+    cancelledTitle: '🚨 Session ended',
   },
 
   // Game Board

@@ -32,6 +32,8 @@ interface Room {
   reconnectTokens: Map<string, ReconnectEntry>; // token → entry
   teamNames: [string, string];
   createdAt: number;
+  disconnectTimers: Map<string, ReturnType<typeof setTimeout>>; // playerId → timer
+  disconnectDeadlines: Map<string, number>; // playerId → deadline timestamp (ms)
 }
 
 const rooms = new Map<string, Room>();
@@ -55,10 +57,23 @@ function createRoom(isPublic: boolean): Room {
     connections: new Map(),
     publicToPrivate: new Map(),
     reconnectTokens: new Map(),
+    disconnectTimers: new Map(),
+    disconnectDeadlines: new Map(),
     createdAt: Date.now(),
   };
   rooms.set(code, room);
   return room;
+}
+
+/** Kick all remaining players and remove the room. */
+function dissolveRoom(room: Room, reason: string) {
+  for (const ws of room.connections.values()) {
+    send(ws, { type: 'kicked', reason });
+  }
+  for (const timer of room.disconnectTimers.values()) clearTimeout(timer);
+  room.disconnectTimers.clear();
+  room.disconnectDeadlines.clear();
+  rooms.delete(room.code);
 }
 
 // Cleanup empty rooms older than 4 h
@@ -111,6 +126,13 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
     const gs = room.game.getPublicState();
     gs.leaderId = room.leaderId;
     gs.teamNames = room.teamNames;
+    // Attach reconnect deadlines (publicId → timestamp) so clients can show a countdown
+    const deadlines: Record<string, number> = {};
+    for (const [pid, dl] of room.disconnectDeadlines) {
+      const pub = [...room.publicToPrivate.entries()].find(([, priv]) => priv === pid)?.[0];
+      if (pub) deadlines[pub] = dl;
+    }
+    gs.disconnectDeadlines = Object.keys(deadlines).length > 0 ? deadlines : undefined;
     for (const [pid, conn] of room.connections) {
       const playerState = room.game.getPlayerState(pid);
       if (!playerState) continue;
@@ -154,6 +176,14 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
         playerId = entry.playerId;
         room.connections.set(playerId, ws);
         room.game.reconnectPlayer(playerId);
+
+        // Cancel any pending disconnect timer for this player
+        const timer = room.disconnectTimers.get(playerId);
+        if (timer) {
+          clearTimeout(timer);
+          room.disconnectTimers.delete(playerId);
+          room.disconnectDeadlines.delete(playerId);
+        }
 
         // If game was paused due to disconnects, resume once all players show as connected
         const gs = room.game.getPublicState();
@@ -428,11 +458,37 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
       room.game.disconnectPlayer(playerId);
       room.connections.delete(playerId);
 
-      // Pause the game if a player disconnects mid-round
       const phase = room.game.getPublicState().phase;
+      const leavingPublicId =
+        room.game.getPublicState().players.find((p) => {
+          const priv = room.publicToPrivate.get(p.publicId);
+          return priv === playerId;
+        })?.publicId ?? '';
+
+      if (phase === 'lobby') {
+        // If the leader leaves the lobby, dissolve the room immediately
+        if (leavingPublicId === room.leaderId) {
+          dissolveRoom(room, 'O líder saiu da sala. A sala foi encerrada.');
+          return;
+        }
+        broadcastRoom();
+        return;
+      }
+
+      // Game is running (playing / paused / roundEnd) — pause and start a 10-min timer
       if (phase === 'playing') {
         room.game.pauseGame();
       }
+
+      const TIMEOUT_MS = 10 * 60 * 1000;
+      const deadline = Date.now() + TIMEOUT_MS;
+      const t = setTimeout(() => {
+        room.disconnectTimers.delete(playerId!);
+        room.disconnectDeadlines.delete(playerId!);
+        dissolveRoom(room, 'Um jogador não reconectou a tempo. A partida foi cancelada.');
+      }, TIMEOUT_MS);
+      room.disconnectTimers.set(playerId, t);
+      room.disconnectDeadlines.set(playerId, deadline);
 
       broadcastRoom();
     }

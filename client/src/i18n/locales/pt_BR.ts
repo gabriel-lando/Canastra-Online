@@ -49,7 +49,8 @@ export const ptBR: Translations = {
     roomCode: 'Código da sala:',
     youAreLeader: '👑 Você é o líder',
     vs: 'VS',
-    leaderHint: '👑 Líder: arraste entre times para mover • arraste dentro do time para reordenar • clique no nome do time para renomear • ✕ para remover',
+    leaderHint: '👑 Líder: arraste (desktop) ou toque (mobile) nos slots para mover/reordenar • toque no nome do time para renomear • ✕ para remover',
+    selectedPlayerHint: 'Movendo {name} — toque em outro slot ou painel do time para colocar',
     ready: '✅ Pronto',
     cancelReady: '↩ Cancelar Pronto',
     allReady: '🚀 Todos prontos! Iniciando jogo...',
@@ -70,6 +71,8 @@ export const ptBR: Translations = {
     title: '⏸ Jogo Pausado',
     message: 'Um jogador se desconectou. Aguardando reconexão...',
     roomCode: 'Código da sala:',
+    countdown: 'Partida cancelada em {time}',
+    cancelledTitle: '🚨 Sessão encerrada',
   },
 
   // Game Board

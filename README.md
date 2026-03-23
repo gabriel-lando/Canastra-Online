@@ -2,6 +2,12 @@
 
 Jogo de cartas online em tempo real, baseado nas regras de Buraco/Canastra. Para 4 jogadores em 2 duplas.
 
+🌐 **Demo**: [canastra.gabriellando.com](https://canastra.gabriellando.com/)
+📦 **Docker Hub**: [gabriellando/canastra-online](https://hub.docker.com/r/gabriellando/canastra-online)
+💻 **Código-fonte**: [github.com/gabriel-lando/Canastra-Online](https://github.com/gabriel-lando/Canastra-Online)
+
+---
+
 ## Como jogar
 
 1. Acesse a URL do servidor.
@@ -15,7 +21,43 @@ Jogo de cartas online em tempo real, baseado nas regras de Buraco/Canastra. Para
 - **Backend**: Node.js 22 + Express + WebSocket (`ws`) + TypeScript
 - **Frontend**: React 19 + Vite + TypeScript
 - **i18n**: Português (BR) e Inglês, com troca em tempo real
-- **Deploy**: Docker + docker-compose (build multi-stage)
+- **Deploy**: Docker + docker-compose (build multi-stage); imagem publicada no Docker Hub
+
+---
+
+## Rodando com Docker (recomendado)
+
+### docker run
+
+```bash
+docker run -d --name canastra-online -p 3000:3000 --restart unless-stopped gabriellando/canastra-online:latest
+```
+
+Acesse: http://localhost:3000
+
+### docker-compose (usando imagem do Docker Hub)
+
+```yaml
+services:
+  canastra-online:
+    image: gabriellando/canastra-online:latest
+    container_name: canastra-online
+    ports:
+      - '3000:3000'
+    restart: unless-stopped
+```
+
+```bash
+docker compose up -d
+```
+
+### Variáveis de ambiente
+
+| Variável | Padrão | Descrição                      |
+| -------- | ------ | ------------------------------ |
+| `PORT`   | `3000` | Porta em que o servidor escuta |
+
+---
 
 ## Desenvolvimento local
 
@@ -32,7 +74,7 @@ npm run install:all
 # 2. Build do frontend e backend
 npm run build
 
-# 4. Iniciar o servidor (serve frontend + API na mesma porta)
+# 3. Iniciar o servidor (serve frontend + API na mesma porta)
 node server/dist/index.js
 ```
 
@@ -50,9 +92,7 @@ npm run dev:server
 npm run dev:client
 ```
 
-## Docker
-
-### Build e deploy
+## Docker (build local)
 
 ```bash
 # Build e iniciar
@@ -104,7 +144,7 @@ Browser ──── WebSocket /api/ws?room=CÓDIGO ───┐
 │   │   ├── i18n/               # Internacionalização (pt-BR padrão, en disponível)
 │   │   └── components/
 │   │       ├── RoomSelect.tsx      # Criar / listar salas públicas / entrar por código
-│   │       ├── Lobby.tsx           # Lobby pré-jogo com drag-and-drop de times
+│   │       ├── Lobby.tsx           # Lobby pré-jogo com drag-and-drop (desktop) e tap (mobile)
 │   │       ├── GameBoard.tsx       # Mesa de jogo principal
 │   │       ├── CardView.tsx        # Componente de carta individual
 │   │       ├── MeldView.tsx        # Componente de joguinho/canastra
@@ -115,7 +155,7 @@ Browser ──── WebSocket /api/ws?room=CÓDIGO ───┐
 │   └── package.json
 ├── server/
 │   └── src/
-│       ├── index.ts            # Express + WebSocket server + REST API
+│       ├── index.ts            # Express + WebSocket server + REST API + gerenciamento de salas
 │       ├── game.ts             # Lógica completa do jogo
 │       ├── cards.ts            # Baralho, validações, pontuação
 │       └── types.ts            # Tipos do servidor
@@ -168,6 +208,9 @@ Browser ──── WebSocket /api/ws?room=CÓDIGO ───┐
 ### Outras
 
 - ✅ Reconexão automática via token de sessão; jogo pausado enquanto jogador está offline
+- ✅ Contador regressivo de 10 minutos exibido ao aguardar reconexão; partida cancelada se expirar
+- ✅ Sala encerrada automaticamente quando o líder sai do lobby
+- ✅ Interface responsiva (mobile e desktop)
 - ✅ Salas públicas e privadas com código de 6 caracteres (alfanumérico sem ambiguidade)
 - ✅ Líder pode renomear times, mover e remover jogadores
 - ✅ Rotação do assento inicial a cada rodada

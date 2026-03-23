@@ -12,7 +12,7 @@ import { useTranslation } from './i18n';
 type AppPhase = 'nameEntry' | 'roomSelect' | 'game';
 
 function App() {
-  const { t } = useTranslation();
+  const { t, interpolate } = useTranslation();
   const [appPhase, setAppPhase] = useState<AppPhase>('nameEntry');
   const [nameInput, setNameInput] = useState('');
   const [nameError, setNameError] = useState('');
@@ -25,6 +25,8 @@ function App() {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [hand, setHand] = useState<Card[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [kickedReason, setKickedReason] = useState<string | null>(null);
+  const [pauseCountdown, setPauseCountdown] = useState<string | null>(null);
 
   const errorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -68,7 +70,8 @@ function App() {
           console.groupEnd();
         }
       } else if (msg.type === 'kicked') {
-        // Server kicked us — clear session, go back to name entry with an error
+        // Server kicked us — save reason, clear session, go back to name entry
+        const reason = msg.reason;
         socket.clearSession();
         socket.disconnect();
         setAppPhase('nameEntry');
@@ -77,7 +80,8 @@ function App() {
         setPlayerId(null);
         setPublicId(null);
         setConnecting(false);
-        showError(msg.reason);
+        setKickedReason(reason);
+        showError(reason);
       } else if (msg.type === 'error') {
         if (msg.message.startsWith('validation.')) {
           const subkey = msg.message.slice('validation.'.length) as keyof typeof t.validation;
@@ -93,6 +97,25 @@ function App() {
       socket.disconnect();
     };
   }, [showError]);
+
+  // Countdown timer for the paused-game reconnect deadline
+  useEffect(() => {
+    const deadlines = gameState?.disconnectDeadlines;
+    if (!deadlines || Object.keys(deadlines).length === 0) {
+      setPauseCountdown(null);
+      return;
+    }
+    const minDeadline = Math.min(...Object.values(deadlines));
+    const tick = () => {
+      const remaining = Math.max(0, minDeadline - Date.now());
+      const mins = Math.floor(remaining / 60000);
+      const secs = Math.floor((remaining % 60000) / 1000);
+      setPauseCountdown(`${mins}:${secs.toString().padStart(2, '0')}`);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [gameState?.disconnectDeadlines]);
 
   const handleJoin = () => {
     const name = nameInput.trim();
@@ -120,6 +143,13 @@ function App() {
     return (
       <div className="name-entry">
         <LanguageSwitcher />
+        {kickedReason && (
+          <div className="kicked-notification" onClick={() => setKickedReason(null)}>
+            <strong>{t.paused.cancelledTitle}</strong>
+            <span>{kickedReason}</span>
+            <span className="kicked-dismiss">✕</span>
+          </div>
+        )}
         <div className="name-entry-card">
           <h1>Canastra Online</h1>
           <p>{t.nameEntry.subtitle}</p>
@@ -217,6 +247,7 @@ function App() {
                       </span>
                     ))}
                 </div>
+                {pauseCountdown && <p className="paused-countdown">{interpolate(t.paused.countdown, { time: pauseCountdown })}</p>}
                 <p className="paused-hint">
                   {t.paused.roomCode} <code>{roomCode}</code>
                 </p>

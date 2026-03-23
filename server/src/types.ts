@@ -63,6 +63,7 @@ export interface GameState {
   roundSummary?: RoundSummary; // populated when phase transitions to roundEnd
   lastRoundPublicId?: string; // set when last stock card is drawn; that player's discard ends the round
   takenSingleDiscardCardId?: string; // set when a player takes a single-card discard pile; cannot discard that card back
+  disconnectDeadlines?: Record<string, number>; // publicId → deadline timestamp (ms) for reconnect timer
 }
 
 export interface RoundSummary {

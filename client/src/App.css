@@ -460,6 +460,21 @@ body,
   border-color: var(--gold) !important;
   background: rgba(212, 175, 55, 0.15) !important;
 }
+.slot-selected {
+  border: 2px solid var(--gold) !important;
+  background: rgba(212, 175, 55, 0.25) !important;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.35);
+}
+.selected-player-hint {
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  color: var(--gold-light);
+  text-align: center;
+  width: 100%;
+}
 .meld-drop-over {
   outline: 3px dashed var(--gold);
   outline-offset: 3px;
@@ -509,6 +524,62 @@ body,
   color: var(--gold);
   font-family: monospace;
   letter-spacing: 2px;
+}
+.paused-countdown {
+  margin-top: 0.75rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--red);
+  letter-spacing: 0.5px;
+}
+
+/* Kicked / session-ended notification on name entry */
+.kicked-notification {
+  position: fixed;
+  top: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  background: #742a2a;
+  border: 2px solid var(--red);
+  border-radius: 10px;
+  padding: 0.85rem 2.5rem 0.85rem 1.25rem;
+  max-width: min(480px, 92vw);
+  width: max-content;
+  text-align: center;
+  box-shadow: var(--shadow);
+  z-index: 1000;
+  cursor: pointer;
+  animation: slide-in 0.25s ease;
+}
+.kicked-notification strong {
+  color: #fc8181;
+  font-size: 1rem;
+}
+.kicked-notification span {
+  color: #fed7d7;
+  font-size: 0.9rem;
+}
+.kicked-dismiss {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.65rem;
+  font-size: 0.85rem;
+  color: #fc8181;
+  line-height: 1;
+}
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 
 .app {
@@ -962,12 +1033,15 @@ body,
 .card-clickable {
   cursor: pointer;
 }
-.card-clickable:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-}
-.card-selected.card-clickable:hover {
-  transform: translateY(-12px);
+/* Hover lift only on devices that support real hover (not touch) */
+@media (hover: hover) {
+  .card-clickable:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  }
+  .card-selected.card-clickable:hover {
+    transform: translateY(-12px);
+  }
 }
 .card-wild {
   background: linear-gradient(135deg, #fffaf0, #fefce8);
@@ -1156,10 +1230,14 @@ body,
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
+  min-height: 2.5rem;
 }
 .hint {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1.2rem;
   color: var(--gray-300);
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-style: italic;
 }
 .round-end,
@@ -1232,20 +1310,234 @@ body,
 .game-over-title {
   font-size: 3rem;
 }
-@media (max-width: 600px) {
+/* ─── Mobile / Responsive ────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  /* Cards – slightly smaller */
   .card {
     width: 52px;
     height: 76px;
     font-size: 0.9rem;
   }
+  .card-small {
+    width: 38px;
+    height: 54px;
+    font-size: 0.7rem;
+  }
+
+  /* Name entry */
+  .name-entry-card {
+    padding: 1.5rem 1.25rem;
+  }
+  .name-entry-card h1 {
+    font-size: 1.9rem;
+  }
+
+  /* Room select */
+  .room-select {
+    padding: 1rem 0.75rem;
+  }
+  .room-select-card {
+    padding: 1.25rem 1rem;
+  }
+  .room-select-header h1 {
+    font-size: 1.5rem;
+  }
+  .created-code {
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+  }
+
+  /* Lobby */
+  .lobby {
+    padding: 1rem 0.75rem;
+    gap: 1rem;
+  }
+  .lobby-header h1 {
+    font-size: 1.75rem;
+  }
+  .teams-grid {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .teams-vs {
+    text-align: center;
+    font-size: 1.2rem;
+    padding: 0;
+  }
+  .team-panel {
+    max-width: 100%;
+    min-width: 0;
+  }
+  .lobby-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  .lobby-actions .btn {
+    width: 100%;
+  }
+
+  /* Game board */
+  .game-board {
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
   .game-header {
     flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.5rem 0.75rem;
+    align-items: flex-start;
   }
-  .table-melds {
-    flex-direction: column;
+  .score-display {
+    width: 100%;
+    justify-content: center;
   }
+  .turn-indicator {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* Other players – one per row, name truncates instead of wrapping */
   .other-players {
     flex-direction: column;
+    gap: 0.4rem;
+  }
+  .other-player {
+    flex: none;
+    width: 100%;
+    min-width: 0;
+    padding: 0.4rem 0.6rem;
+  }
+  .other-player-info {
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+  .other-player-info strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  /* Center: stock + discard */
+  .game-center {
+    gap: 0.75rem;
+  }
+
+  /* Discard expanded – full width popup */
+  .discard-expanded {
+    left: 0;
+    right: 0;
+    transform: none;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Table melds – stacked */
+  .table-melds {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .table-melds-section {
+    min-width: 0;
+  }
+  .meld {
+    min-width: 100px;
+  }
+
+  /* Hand area */
+  .my-hand-area {
+    padding: 0.65rem;
+  }
+  .hand-cards {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: visible;
+    padding-bottom: 0.5rem;
+    gap: 4px;
+    /* ensure cards don't get clipped on scroll */
+    padding-top: 12px;
+    margin-top: -12px;
+  }
+  .card-drag-wrapper {
+    flex-shrink: 0;
+  }
+
+  /* Action buttons – full width on mobile */
+  .hand-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .action-group {
+    flex-direction: column;
+    align-items: stretch;
+    min-height: 3rem;
+  }
+  .action-group .btn {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    font-size: 1rem;
+  }
+  .hint {
+    padding: 0.7rem 1rem;
+    font-size: 1rem;
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Round end / game over */
+  .round-end,
+  .game-over {
+    padding: 1.5rem 0.75rem;
+    gap: 1rem;
+  }
+  .round-end h2,
+  .game-over h2 {
+    font-size: 1.5rem;
+  }
+  .round-scores,
+  .final-scores {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+  .round-team-score,
+  .final-team {
+    min-width: 0;
+    width: 100%;
+    max-width: 320px;
+    padding: 1rem 1.25rem;
+  }
+  .game-over-title {
+    font-size: 2.2rem;
+  }
+
+  /* Language switcher – smaller */
+  .lang-switcher {
+    bottom: 0.5rem;
+    right: 0.5rem;
+    padding: 0.3rem 0.55rem;
+    font-size: 0.78rem;
+  }
+
+  /* Language switcher — hide during the game to save space */
+  .app .lang-switcher {
+    display: none;
+  }
+
+  /* Other players — hide the mini card row, keep the info bar */
+  .other-player-cards {
+    display: none;
+  }
+
+  /* Active-turn badge — icon only, no text */
+  .active-badge-text {
+    display: none;
+  }
+
+  /* Paused overlay */
+  .paused-box {
+    padding: 1.25rem;
   }
 }
 

@@ -1,6 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { GameState, Player } from '../types';
 import { useTranslation } from '../i18n';
+
+function useIsTouchDevice() {
+  const [isTouch, setIsTouch] = useState(false);
+  useEffect(() => {
+    setIsTouch(window.matchMedia('(pointer: coarse)').matches);
+  }, []);
+  return isTouch;
+}
 
 interface LobbyProps {
   gameState: GameState;
@@ -18,6 +26,7 @@ interface LobbyProps {
 
 export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, onReady, onUnready, onSelectTeam, onMovePlayer, onKickPlayer, onRenameTeam, onSwapTeamOrder }) => {
   const { t, interpolate } = useTranslation();
+  const isTouchDevice = useIsTouchDevice();
   const me = gameState.players.find((p) => p.publicId === myPublicId);
   const isReady = me?.status === 'ready';
   const isLeader = gameState.leaderId === myPublicId;
@@ -30,11 +39,13 @@ export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, o
   const canStart = readyCount === 4 && team0.length === 2 && team1.length === 2;
 
   const [dragOverTeam, setDragOverTeam] = useState<0 | 1 | null>(null);
+  const [selectedPlayer, setSelectedPlayer] = useState<{ publicId: string; teamId: 0 | 1 } | null>(null);
   const teamNames = gameState.teamNames ?? [t.lobby.defaultTeamA, t.lobby.defaultTeamB];
 
   const handleDragStart = (e: React.DragEvent, publicId: string, fromTeam: 0 | 1) => {
     e.dataTransfer.setData('publicId', publicId);
     e.dataTransfer.setData('fromTeam', String(fromTeam));
+    setSelectedPlayer(null);
   };
 
   // Drop on the team panel background → move to that team (only if from a different team)
@@ -63,6 +74,30 @@ export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, o
     }
   };
 
+  const handleSlotTap = (publicId: string, tapTeamId: 0 | 1) => {
+    if (!isTouchDevice) return;
+    if (!selectedPlayer) {
+      setSelectedPlayer({ publicId, teamId: tapTeamId });
+    } else if (selectedPlayer.publicId === publicId) {
+      setSelectedPlayer(null);
+    } else if (selectedPlayer.teamId === tapTeamId) {
+      onSwapTeamOrder(selectedPlayer.publicId, publicId);
+      setSelectedPlayer(null);
+    } else {
+      onMovePlayer(selectedPlayer.publicId, tapTeamId);
+      setSelectedPlayer(null);
+    }
+  };
+
+  const handleTeamTap = (tapTeamId: 0 | 1) => {
+    if (!isTouchDevice) return;
+    if (!selectedPlayer) return;
+    if (selectedPlayer.teamId !== tapTeamId) {
+      onMovePlayer(selectedPlayer.publicId, tapTeamId);
+    }
+    setSelectedPlayer(null);
+  };
+
   return (
     <div className="lobby">
       <div className="lobby-header">
@@ -78,6 +113,8 @@ export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, o
         {isLeader && <span className="leader-badge">{t.lobby.youAreLeader}</span>}
       </div>
 
+      {isLeader && selectedPlayer && isTouchDevice && <p className="selected-player-hint">{interpolate(t.lobby.selectedPlayerHint, { name: gameState.players.find((p) => p.publicId === selectedPlayer.publicId)?.name ?? '' })}</p>}
+
       <div className="teams-grid">
         <TeamPanel
           teamId={0}
@@ -87,6 +124,7 @@ export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, o
           isLeader={isLeader}
           canJoin={team0.length < 2 && me?.teamId !== 0}
           isDragOver={dragOverTeam === 0}
+          isTouchDevice={isTouchDevice}
           onJoin={() => onSelectTeam(0)}
           onDragStart={(e, publicId) => handleDragStart(e, publicId, 0)}
           onDragOver={(e) => {
@@ -96,6 +134,9 @@ export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, o
           onDragLeave={() => setDragOverTeam(null)}
           onDrop={(e) => handleTeamPanelDrop(e, 0)}
           onDropSlot={(e, slotPublicId) => handleSlotDrop(e, slotPublicId, 0)}
+          selectedPlayerId={selectedPlayer?.publicId ?? null}
+          onSlotTap={(publicId) => handleSlotTap(publicId, 0)}
+          onTeamTap={() => handleTeamTap(0)}
           onKick={onKickPlayer}
           onRenameTeam={(name) => onRenameTeam(0, name)}
         />
@@ -108,6 +149,7 @@ export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, o
           isLeader={isLeader}
           canJoin={team1.length < 2 && me?.teamId !== 1}
           isDragOver={dragOverTeam === 1}
+          isTouchDevice={isTouchDevice}
           onJoin={() => onSelectTeam(1)}
           onDragStart={(e, publicId) => handleDragStart(e, publicId, 1)}
           onDragOver={(e) => {
@@ -117,6 +159,9 @@ export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, o
           onDragLeave={() => setDragOverTeam(null)}
           onDrop={(e) => handleTeamPanelDrop(e, 1)}
           onDropSlot={(e, slotPublicId) => handleSlotDrop(e, slotPublicId, 1)}
+          selectedPlayerId={selectedPlayer?.publicId ?? null}
+          onSlotTap={(publicId) => handleSlotTap(publicId, 1)}
+          onTeamTap={() => handleTeamTap(1)}
           onKick={onKickPlayer}
           onRenameTeam={(name) => onRenameTeam(1, name)}
         />
@@ -163,17 +208,41 @@ interface TeamPanelProps {
   isLeader: boolean;
   canJoin: boolean;
   isDragOver: boolean;
+  isTouchDevice: boolean;
+  selectedPlayerId: string | null;
   onJoin: () => void;
   onDragStart: (e: React.DragEvent, publicId: string) => void;
   onDragOver: (e: React.DragEvent) => void;
   onDragLeave: () => void;
   onDrop: (e: React.DragEvent) => void;
   onDropSlot: (e: React.DragEvent, slotPublicId: string) => void;
+  onSlotTap: (publicId: string) => void;
+  onTeamTap: () => void;
   onKick: (publicId: string) => void;
   onRenameTeam: (name: string) => void;
 }
 
-const TeamPanel: React.FC<TeamPanelProps> = ({ teamId, teamName, players, myPublicId, isLeader, canJoin, isDragOver, onJoin, onDragStart, onDragOver, onDragLeave, onDrop, onDropSlot, onKick, onRenameTeam }) => {
+const TeamPanel: React.FC<TeamPanelProps> = ({
+  teamId,
+  teamName,
+  players,
+  myPublicId,
+  isLeader,
+  canJoin,
+  isDragOver,
+  isTouchDevice,
+  selectedPlayerId,
+  onJoin,
+  onDragStart,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  onDropSlot,
+  onSlotTap,
+  onTeamTap,
+  onKick,
+  onRenameTeam,
+}) => {
   const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(teamName);
@@ -192,7 +261,19 @@ const TeamPanel: React.FC<TeamPanelProps> = ({ teamId, teamName, players, myPubl
   };
 
   return (
-    <div className={`team-panel team-panel-${teamId}${isDragOver ? ' team-panel-drag-over' : ''}`} onDragOver={isLeader ? onDragOver : undefined} onDragLeave={isLeader ? onDragLeave : undefined} onDrop={isLeader ? onDrop : undefined}>
+    <div
+      className={`team-panel team-panel-${teamId}${isDragOver ? ' team-panel-drag-over' : ''}`}
+      onDragOver={isLeader ? onDragOver : undefined}
+      onDragLeave={isLeader ? onDragLeave : undefined}
+      onDrop={isLeader ? onDrop : undefined}
+      onClick={
+        isLeader && isTouchDevice && selectedPlayerId
+          ? (e) => {
+              if (e.target === e.currentTarget) onTeamTap();
+            }
+          : undefined
+      }
+    >
       {editing ? (
         <input
           className="team-name-input"
@@ -230,8 +311,9 @@ const TeamPanel: React.FC<TeamPanelProps> = ({ teamId, teamName, players, myPubl
         {players.map((p, idx) => (
           <div
             key={p.publicId}
-            className={`team-slot filled${p.publicId === myPublicId ? ' is-me' : ''}${isLeader ? ' leader-draggable' : ''}${dragOverSlot === p.publicId ? ' slot-drag-over' : ''}`}
+            className={`team-slot filled${p.publicId === myPublicId ? ' is-me' : ''}${isLeader ? ' leader-draggable' : ''}${dragOverSlot === p.publicId ? ' slot-drag-over' : ''}${selectedPlayerId === p.publicId ? ' slot-selected' : ''}`}
             draggable={isLeader}
+            onClick={isLeader && isTouchDevice ? () => onSlotTap(p.publicId) : undefined}
             onDragStart={isLeader ? (e) => onDragStart(e, p.publicId) : undefined}
             onDragOver={
               isLeader
@@ -257,7 +339,14 @@ const TeamPanel: React.FC<TeamPanelProps> = ({ teamId, teamName, players, myPubl
             <div className="slot-right">
               <span className={`slot-connected${p.connected ? '' : ' offline'}`}>{p.connected ? '🟢' : '🔴'}</span>
               {isLeader && p.publicId !== myPublicId && (
-                <button className="btn-kick" title={t.lobby.kickPlayer} onClick={() => onKick(p.publicId)}>
+                <button
+                  className="btn-kick"
+                  title={t.lobby.kickPlayer}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onKick(p.publicId);
+                  }}
+                >
                   ✕
                 </button>
               )}
@@ -265,7 +354,7 @@ const TeamPanel: React.FC<TeamPanelProps> = ({ teamId, teamName, players, myPubl
           </div>
         ))}
         {Array.from({ length: 2 - players.length }).map((_, i) => (
-          <div key={i} className="team-slot empty">
+          <div key={i} className="team-slot empty" onClick={isLeader && isTouchDevice && selectedPlayerId ? onTeamTap : undefined}>
             <span>{t.lobby.emptySlot}</span>
           </div>
         ))}

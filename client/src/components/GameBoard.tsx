@@ -194,7 +194,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicI
                     {p.handCount} {t.game.cards}
                   </span>
                   {!p.connected && <span className="offline-badge">{t.game.offline}</span>}
-                  {isCurrentTurn && <span className="active-badge">{t.game.playing}</span>}
+                  {isCurrentTurn && (
+                    <span className="active-badge">
+                      <span className="active-badge-icon">▶</span>
+                      <span className="active-badge-text"> {t.game.playing.replace('▶ ', '')}</span>
+                    </span>
+                  )}
                 </div>
                 <div className="other-player-cards">
                   {Array.from({ length: Math.min(p.handCount, 13) }).map((_, i) => (
