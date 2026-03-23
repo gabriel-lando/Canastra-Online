@@ -73,7 +73,7 @@ export type ValidationResult = { valid: true } | { valid: false; reason: string 
  * Validate a group meld (same rank).
  */
 export function validateGroup(cards: Card[]): ValidationResult {
-  if (cards.length < 3) return { valid: false, reason: 'A group needs at least 3 cards' };
+  if (cards.length < 3) return { valid: false, reason: 'validation.groupMinCards' };
 
   const isGroupOf2s = cards.every((c) => c.rank === '2');
 
@@ -85,11 +85,11 @@ export function validateGroup(cards: Card[]): ValidationResult {
   // Check all ranks are the same (non-2 rank)
   const naturalCards = cards.filter((c) => c.rank !== '2');
   const ranks = new Set(naturalCards.map((c) => c.rank));
-  if (ranks.size > 1) return { valid: false, reason: 'Group must have same rank' };
+  if (ranks.size > 1) return { valid: false, reason: 'validation.groupSameRank' };
 
   const wildcards = cards.filter((c) => c.rank === '2');
-  if (wildcards.length >= naturalCards.length) {
-    return { valid: false, reason: 'Wildcards cannot be majority in a group' };
+  if (wildcards.length > 1) {
+    return { valid: false, reason: 'validation.groupMaxOneWildcard' };
   }
 
   return { valid: true };
@@ -100,27 +100,28 @@ export function validateGroup(cards: Card[]): ValidationResult {
  * Wildcards can fill internal gaps or extend borders.
  */
 export function validateSequence(cards: Card[]): ValidationResult {
-  if (cards.length < 3) return { valid: false, reason: 'A sequence needs at least 3 cards' };
+  if (cards.length < 3) return { valid: false, reason: 'validation.seqMinCards' };
 
   const non2Cards = cards.filter((c) => c.rank !== '2');
   const twos = cards.filter((c) => c.rank === '2');
 
-  if (non2Cards.length === 0) return { valid: false, reason: 'Need at least one natural card' };
+  if (non2Cards.length === 0) return { valid: false, reason: 'validation.seqNeedNatural' };
 
   // All non-2 natural cards must be same suit
   const suits = new Set(non2Cards.map((c) => c.suit));
-  if (suits.size > 1) return { valid: false, reason: 'Sequence must be same suit' };
+  if (suits.size > 1) return { valid: false, reason: 'validation.seqSameSuit' };
 
   // No duplicate ranks among non-2 cards
   const non2Values = new Set(non2Cards.map((c) => rankValue(c.rank)));
   if (non2Values.size !== non2Cards.length) {
-    return { valid: false, reason: 'Duplicate natural cards in sequence' };
+    return { valid: false, reason: 'validation.seqDuplicateRanks' };
   }
 
   // Inner helper: check whether a given set of natural ranks + wildcard count forms a valid sequence.
   // maxPossibleRank is 13 normally, or 14 when treating Ace as high (after K).
   const tryValidate = (naturalRanks: Set<number>, wildcardCount: number, maxPossibleRank = 13): boolean => {
     if (wildcardCount >= naturalRanks.size) return false; // wildcards must be minority
+    if (wildcardCount > 1) return false; // at most one wildcard (2) allowed per meld
     const minR = Math.min(...naturalRanks);
     const maxR = Math.max(...naturalRanks);
     let gapsInSpan = 0;
@@ -138,8 +139,9 @@ export function validateSequence(cards: Card[]): ValidationResult {
   // Attempt 1: all 2s are wildcards, Ace is low (rank 1)
   if (tryValidate(non2Values, twos.length)) return { valid: true };
 
-  // Attempt 2: promote ONE 2 to be the natural rank-2 card (Ace low).
-  if (twos.length > 0 && !non2Values.has(2)) {
+  // Attempt 2: promote ONE same-suit 2 to be the natural rank-2 card (Ace low).
+  // Only a 2 of the same suit as the sequence can act as a natural card.
+  if (twos.length > 0 && !non2Values.has(2) && twos.some((c) => c.suit === non2Cards[0].suit)) {
     const promotedNaturals = new Set([...non2Values, 2]);
     if (tryValidate(promotedNaturals, twos.length - 1)) return { valid: true };
   }
@@ -152,15 +154,18 @@ export function validateSequence(cards: Card[]): ValidationResult {
   }
 
   // Return the most helpful error for the failed case
+  const canPromote = twos.length > 0 && !non2Values.has(2) && twos.some((c) => c.suit === non2Cards[0].suit);
+  const effectiveWildcards = twos.length - (canPromote ? 1 : 0);
+  if (effectiveWildcards > 1) return { valid: false, reason: 'validation.seqMaxOneWildcard' };
   const minR = Math.min(...non2Values);
   const maxR = Math.max(...non2Values);
   let gapsInSpan = 0;
   for (let v = minR; v <= maxR; v++) {
     if (!non2Values.has(v)) gapsInSpan++;
   }
-  if (gapsInSpan > twos.length) return { valid: false, reason: 'Not enough wildcards to fill gaps in sequence' };
-  if (twos.length >= non2Cards.length) return { valid: false, reason: 'Wildcards cannot be majority in a sequence' };
-  return { valid: false, reason: 'Invalid sequence combination' };
+  if (gapsInSpan > twos.length) return { valid: false, reason: 'validation.seqNotEnoughWildcards' };
+  if (twos.length >= non2Cards.length) return { valid: false, reason: 'validation.seqWildcardMajority' };
+  return { valid: false, reason: 'validation.seqInvalid' };
 }
 
 /**

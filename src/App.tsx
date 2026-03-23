@@ -79,7 +79,12 @@ function App() {
         setConnecting(false);
         showError(msg.reason);
       } else if (msg.type === 'error') {
-        showError(msg.message);
+        if (msg.message.startsWith('validation.')) {
+          const subkey = msg.message.slice('validation.'.length) as keyof typeof t.validation;
+          showError(t.validation[subkey] ?? msg.message);
+        } else {
+          showError(msg.message);
+        }
         setConnecting(false);
       }
     });

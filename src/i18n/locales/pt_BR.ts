@@ -139,4 +139,19 @@ export const ptBR: Translations = {
   lang: {
     switchTo: 'Trocar idioma',
   },
+
+  // Erros de validação de combinações (chaves enviadas pelo servidor)
+  validation: {
+    groupMinCards: 'Um grupo precisa de pelo menos 3 cartas',
+    groupSameRank: 'Grupo deve ter cartas do mesmo valor',
+    groupMaxOneWildcard: 'No máximo um curinga (2) é permitido em um grupo',
+    seqMinCards: 'Uma sequência precisa de pelo menos 3 cartas',
+    seqNeedNatural: 'Precisa de pelo menos uma carta natural',
+    seqSameSuit: 'Sequência deve ser do mesmo naipe',
+    seqDuplicateRanks: 'Cartas naturais duplicadas na sequência',
+    seqMaxOneWildcard: 'No máximo um curinga (2) é permitido em uma sequência',
+    seqNotEnoughWildcards: 'Curingas insuficientes para preencher as lacunas na sequência',
+    seqWildcardMajority: 'Curingas não podem ser maioria em uma sequência',
+    seqInvalid: 'Combinação de sequência inválida',
+  },
 };

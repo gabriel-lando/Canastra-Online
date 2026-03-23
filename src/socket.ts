@@ -142,27 +142,42 @@ export function detectMeldType(cards: Card[]): 'group' | 'sequence' | null {
   // --- Try group ---
   if (isGroupOf2s) return 'group';
   const groupRanks = new Set(naturals.map((c) => c.rank));
-  if (groupRanks.size === 1 && wildcards.length < naturals.length) return 'group';
+  if (groupRanks.size === 1 && wildcards.length <= 1) return 'group';
 
   // --- Try sequence ---
   const suits = new Set(naturals.map((c) => c.suit));
-  if (suits.size === 1 && wildcards.length < naturals.length) {
-    const trySeq = (valueOf: (c: Card) => number, maxPossible: number): boolean => {
+  if (suits.size === 1 && wildcards.length <= 2) {
+    const seqSuit = naturals[0].suit;
+    const trySeq = (valueOf: (c: Card) => number, maxPossible: number, wcCount: number): boolean => {
+      if (wcCount > 1) return false; // at most one wildcard (2) per meld
       const vals = naturals.map(valueOf);
       const unique = new Set(vals);
       if (unique.size !== naturals.length) return false; // duplicate ranks
       const minV = Math.min(...vals);
       const maxV = Math.max(...vals);
       const gaps = maxV - minV + 1 - naturals.length;
-      if (gaps > wildcards.length) return false;
-      const ext = wildcards.length - gaps;
+      if (gaps > wcCount) return false;
+      const ext = wcCount - gaps;
       return ext <= minV - 1 + (maxPossible - maxV);
     };
-    // Low ace (A=1)
-    if (trySeq((c) => RANK_ORDER[c.rank], 13)) return 'sequence';
+    // Low ace (A=1), all 2s as wildcards
+    if (trySeq((c) => RANK_ORDER[c.rank], 13, wildcards.length)) return 'sequence';
+    // Promote one same-suit 2 to natural rank-2 (low ace only)
+    const hasSameSuit2 = wildcards.some((c) => c.suit === seqSuit);
+    const promotedWcCount = wildcards.length - 1;
+    if (hasSameSuit2 && !naturals.some((c) => c.rank === '2') && promotedWcCount <= 1) {
+      const promotedVals = [...naturals.map((c) => RANK_ORDER[c.rank]), 2];
+      const uniquePromoted = new Set(promotedVals);
+      if (uniquePromoted.size === promotedVals.length) {
+        const minV = Math.min(...promotedVals);
+        const maxV = Math.max(...promotedVals);
+        const gaps = maxV - minV + 1 - promotedVals.length;
+        if (gaps <= promotedWcCount && promotedWcCount - gaps <= minV - 1 + (13 - maxV)) return 'sequence';
+      }
+    }
     // High ace (A=14): covers Q K A, 10 J Q K A, etc.
     if (naturals.some((c) => c.rank === 'A')) {
-      if (trySeq((c) => (c.rank === 'A' ? 14 : RANK_ORDER[c.rank]), 14)) return 'sequence';
+      if (trySeq((c) => (c.rank === 'A' ? 14 : RANK_ORDER[c.rank]), 14, wildcards.length)) return 'sequence';
     }
   }
 

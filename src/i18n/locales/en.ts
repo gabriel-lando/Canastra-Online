@@ -120,6 +120,19 @@ export interface Translations {
   lang: {
     switchTo: string;
   };
+  validation: {
+    groupMinCards: string;
+    groupSameRank: string;
+    groupMaxOneWildcard: string;
+    seqMinCards: string;
+    seqNeedNatural: string;
+    seqSameSuit: string;
+    seqDuplicateRanks: string;
+    seqMaxOneWildcard: string;
+    seqNotEnoughWildcards: string;
+    seqWildcardMajority: string;
+    seqInvalid: string;
+  };
 }
 
 export const en: Translations = {
@@ -260,5 +273,20 @@ export const en: Translations = {
   // Language switcher
   lang: {
     switchTo: 'Switch language',
+  },
+
+  // Meld validation errors (keyed by server reason strings)
+  validation: {
+    groupMinCards: 'A group needs at least 3 cards',
+    groupSameRank: 'Group must have same rank',
+    groupMaxOneWildcard: 'At most one wildcard (2) is allowed in a group',
+    seqMinCards: 'A sequence needs at least 3 cards',
+    seqNeedNatural: 'Need at least one natural card',
+    seqSameSuit: 'Sequence must be same suit',
+    seqDuplicateRanks: 'Duplicate natural cards in sequence',
+    seqMaxOneWildcard: 'At most one wildcard (2) is allowed in a sequence',
+    seqNotEnoughWildcards: 'Not enough wildcards to fill gaps in sequence',
+    seqWildcardMajority: 'Wildcards cannot be majority in a sequence',
+    seqInvalid: 'Invalid sequence combination',
   },
 };
