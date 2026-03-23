@@ -4,6 +4,22 @@ import { CardView } from './CardView';
 import { MeldView } from './MeldView';
 import { isMyTurn, detectMeldType } from '../socket';
 import { useTranslation } from '../i18n';
+import type { Translations } from '../i18n/locales/en';
+
+const SUIT_EMOJI: Record<string, string> = { hearts: '♥', diamonds: '♦', clubs: '♣', spades: '♠' };
+
+function resolveActionMsg(action: { key: string; params?: Record<string, string | number> }, t: Translations, interpolate: (str: string, params: Record<string, string | number>) => string): string {
+  const parts = action.key.split('.');
+  const template = parts.length === 2 ? (t as Record<string, Record<string, string>>)[parts[0]]?.[parts[1]] : undefined;
+  if (!template) return action.key;
+  const resolved: Record<string, string | number> = {};
+  for (const [k, v] of Object.entries(action.params ?? {})) {
+    if (k === 'suit') resolved[k] = SUIT_EMOJI[v as string] ?? v;
+    else if (k === 'type') resolved[k] = v === 'group' ? t.action.meldGroup : t.action.meldSequence;
+    else resolved[k] = v;
+  }
+  return interpolate(template, resolved);
+}
 
 interface GameBoardProps {
   gameState: GameState;
@@ -174,7 +190,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicI
         </div>
       </div>
 
-      {gameState.lastAction && <div className="last-action">{gameState.lastAction}</div>}
+      {gameState.lastAction && <div className="last-action">{resolveActionMsg(gameState.lastAction, t, interpolate)}</div>}
 
       {/* Other players */}
       <div className="other-players">

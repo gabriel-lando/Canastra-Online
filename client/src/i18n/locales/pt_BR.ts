@@ -149,6 +149,24 @@ export const ptBR: Translations = {
     switchTo: 'Trocar idioma',
   },
 
+  // Log de ações do jogo
+  action: {
+    roundStarted: 'Rodada começou!',
+    drewLastCard: '{name} comprou a última carta! Última jogada antes do fim da rodada.',
+    drewFromStock: '{name} comprou do monte',
+    tookDiscard: '{name} pegou o descarte ({count} cartas)',
+    laidDownAndWentOut: '{name} baixou e saiu! Fim da rodada.',
+    laidDown: '{name} baixou um(a) {type}',
+    addedToMeldAndWentOut: '{name} adicionou e saiu! Fim da rodada.',
+    addedToMeld: '{name} adicionou a um(a) {type}',
+    discardedAndWentOut: '{name} descartou e saiu! Fim da rodada.',
+    discardedDeckEmpty: '{name} descartou. Baralho esgotado — fim da rodada!',
+    discarded: '{name} descartou {rank}{suit}',
+    wentOut: '{name} saiu! Fim da rodada.',
+    meldGroup: 'grupo',
+    meldSequence: 'sequência',
+  },
+
   // Erros de validação de combinações (chaves enviadas pelo servidor)
   validation: {
     groupMinCards: 'Um grupo precisa de pelo menos 3 cartas',

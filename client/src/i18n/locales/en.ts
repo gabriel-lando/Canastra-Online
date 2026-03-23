@@ -129,6 +129,22 @@ export interface Translations {
   lang: {
     switchTo: string;
   };
+  action: {
+    roundStarted: string;
+    drewLastCard: string;
+    drewFromStock: string;
+    tookDiscard: string;
+    laidDownAndWentOut: string;
+    laidDown: string;
+    addedToMeldAndWentOut: string;
+    addedToMeld: string;
+    discardedAndWentOut: string;
+    discardedDeckEmpty: string;
+    discarded: string;
+    wentOut: string;
+    meldGroup: string;
+    meldSequence: string;
+  };
   validation: {
     groupMinCards: string;
     groupSameRank: string;
@@ -337,6 +353,24 @@ export const en: Translations = {
   // Language switcher
   lang: {
     switchTo: 'Switch language',
+  },
+
+  // Game action log
+  action: {
+    roundStarted: 'Round started!',
+    drewLastCard: '{name} drew the last card! Last play before round end.',
+    drewFromStock: '{name} drew from stock',
+    tookDiscard: '{name} took the discard pile ({count} cards)',
+    laidDownAndWentOut: '{name} laid down and went out! Round over.',
+    laidDown: '{name} laid down a {type}',
+    addedToMeldAndWentOut: '{name} added to a meld and went out! Round over.',
+    addedToMeld: '{name} added to a {type}',
+    discardedAndWentOut: '{name} discarded and went out! Round over.',
+    discardedDeckEmpty: '{name} discarded. Deck empty — round over!',
+    discarded: '{name} discarded {rank}{suit}',
+    wentOut: '{name} went out! Round over.',
+    meldGroup: 'group',
+    meldSequence: 'sequence',
   },
 
   // Meld validation errors (keyed by server reason strings)

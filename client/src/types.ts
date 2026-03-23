@@ -53,7 +53,7 @@ export interface GameState {
   round: number;
   winner?: 0 | 1;
   turnPhase: 'mustDraw' | 'canAct' | 'mustDiscard';
-  lastAction?: string;
+  lastAction?: { key: string; params?: Record<string, string | number> };
   leaderId?: string;
   teamNames?: [string, string];
   roundSummary?: RoundSummary;

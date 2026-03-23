@@ -251,7 +251,7 @@ export class Game {
     // Round 1 → seat 0 (A1), Round 2 → seat 1 (B1), Round 3 → seat 2 (A2), Round 4 → seat 3 (B2), repeat.
     gs.currentPlayerIndex = (gs.round - 1) % 4;
     gs.turnPhase = 'mustDraw';
-    gs.lastAction = 'Round started!';
+    gs.lastAction = { key: 'action.roundStarted' };
   }
 
   private getCurrentPlayer(): PlayerPrivate | undefined {
@@ -285,9 +285,9 @@ export class Game {
 
     if (gs.stockCount === 0) {
       gs.lastRoundPublicId = current.publicId;
-      gs.lastAction = `${current.name} comprou a última carta! Última jogada antes do fim da rodada.`;
+      gs.lastAction = { key: 'action.drewLastCard', params: { name: current.name } };
     } else {
-      gs.lastAction = `${current.name} drew from stock`;
+      gs.lastAction = { key: 'action.drewFromStock', params: { name: current.name } };
     }
     return { success: true };
   }
@@ -312,7 +312,7 @@ export class Game {
     gs.takenSingleDiscardCardId = pile.length === 1 ? pile[0].id : undefined;
     this.updateSyncedPlayer(current);
     gs.turnPhase = 'canAct';
-    gs.lastAction = `${current.name} took the discard pile (${pile.length} cards)`;
+    gs.lastAction = { key: 'action.tookDiscard', params: { name: current.name, count: pile.length } };
     return { success: true };
   }
 
@@ -382,12 +382,12 @@ export class Game {
 
     // Auto go-out: team has a canasta and player played every card
     if (team.hasCanasta && current.hand.length === 0) {
-      gs.lastAction = `${current.name} baixou e saiu! Fim da rodada.`;
+      gs.lastAction = { key: 'action.laidDownAndWentOut', params: { name: current.name } };
       this.endRound(current.teamId);
       return { success: true };
     }
 
-    gs.lastAction = `${current.name} laid down a ${resolvedType}`;
+    gs.lastAction = { key: 'action.laidDown', params: { name: current.name, type: resolvedType } };
     return { success: true };
   }
 
@@ -424,12 +424,12 @@ export class Game {
 
     // Auto go-out: team now has a canasta and player has no cards left
     if (team.hasCanasta && player.hand.length === 0) {
-      this.state.public.lastAction = `${player.name} adicionou e saiu! Fim da rodada.`;
+      this.state.public.lastAction = { key: 'action.addedToMeldAndWentOut', params: { name: player.name } };
       this.endRound(player.teamId);
       return { success: true };
     }
 
-    this.state.public.lastAction = `${player.name} added to a ${meld.type}`;
+    this.state.public.lastAction = { key: 'action.addedToMeld', params: { name: player.name, type: meld.type } };
     return { success: true };
   }
 
@@ -490,19 +490,19 @@ export class Game {
 
     // Auto go-out: team has canasta and player just discarded their last card
     if (team.hasCanasta && current.hand.length === 0) {
-      gs.lastAction = `${current.name} descartou e saiu! Fim da rodada.`;
+      gs.lastAction = { key: 'action.discardedAndWentOut', params: { name: current.name } };
       this.endRound(current.teamId);
       return { success: true };
     }
 
     // Deck-out last round: this player drew the last stock card; their discard ends the round
     if (gs.lastRoundPublicId === current.publicId) {
-      gs.lastAction = `${current.name} descartou. Baralho esgotado — fim da rodada!`;
+      gs.lastAction = { key: 'action.discardedDeckEmpty', params: { name: current.name } };
       this.endRound(null);
       return { success: true };
     }
 
-    gs.lastAction = `${current.name} discarded ${card.rank} of ${card.suit}`;
+    gs.lastAction = { key: 'action.discarded', params: { name: current.name, rank: card.rank, suit: card.suit } };
     this.advanceTurn();
     return { success: true };
   }
@@ -535,7 +535,7 @@ export class Game {
     current.handCount = 0;
     this.updateSyncedPlayer(current);
 
-    gs.lastAction = `${current.name} went out! Round over.`;
+    gs.lastAction = { key: 'action.wentOut', params: { name: current.name } };
     this.endRound(current.teamId);
     return { success: true };
   }

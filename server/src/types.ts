@@ -57,7 +57,7 @@ export interface GameState {
   round: number;
   winner?: 0 | 1; // team id
   turnPhase: 'mustDraw' | 'canAct' | 'mustDiscard';
-  lastAction?: string;
+  lastAction?: { key: string; params?: Record<string, string | number> };
   leaderId?: string; // publicId of the room leader
   teamNames?: [string, string]; // custom team names, defaults to ["Time A", "Time B"]
   roundSummary?: RoundSummary; // populated when phase transitions to roundEnd
