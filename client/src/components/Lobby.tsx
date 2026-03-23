@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { GameState, Player } from '../types';
 import { useTranslation } from '../i18n';
 
@@ -40,6 +40,19 @@ export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, o
 
   const [dragOverTeam, setDragOverTeam] = useState<0 | 1 | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<{ publicId: string; teamId: 0 | 1 } | null>(null);
+  const [showHint, setShowHint] = useState(false);
+  const hintRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showHint) return;
+    const handler = (e: MouseEvent) => {
+      if (hintRef.current && !hintRef.current.contains(e.target as Node)) {
+        setShowHint(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showHint]);
   const teamNames = gameState.teamNames ?? [t.lobby.defaultTeamA, t.lobby.defaultTeamB];
 
   const handleDragStart = (e: React.DragEvent, publicId: string, fromTeam: 0 | 1) => {
@@ -110,7 +123,23 @@ export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, o
             📋
           </button>
         </div>
-        {isLeader && <span className="leader-badge">{t.lobby.youAreLeader}</span>}
+        {isLeader && (
+          <div className="leader-hint-wrap" ref={hintRef}>
+            <span className="leader-badge">{t.lobby.youAreLeader}</span>
+            <button className="leader-hint-btn" onClick={() => setShowHint((v) => !v)} aria-label="Leader hint" aria-expanded={showHint}>
+              ?
+            </button>
+            {showHint && (
+              <div className="leader-hint-popover">
+                <ul className="leader-hint-list">
+                  {t.lobby.leaderHint.map((tip, i) => (
+                    <li key={i}>{tip}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {isLeader && selectedPlayer && isTouchDevice && <p className="selected-player-hint">{interpolate(t.lobby.selectedPlayerHint, { name: gameState.players.find((p) => p.publicId === selectedPlayer.publicId)?.name ?? '' })}</p>}
@@ -166,8 +195,6 @@ export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, o
           onRenameTeam={(name) => onRenameTeam(1, name)}
         />
       </div>
-
-      {isLeader && <p className="leader-hint">{t.lobby.leaderHint}</p>}
 
       <div className="lobby-actions">
         {!isReady ? (

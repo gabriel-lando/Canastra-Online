@@ -40,7 +40,7 @@ export interface Translations {
     roomCode: string;
     youAreLeader: string;
     vs: string;
-    leaderHint: string;
+    leaderHint: string[];
     selectedPlayerHint: string;
     ready: string;
     cancelReady: string;
@@ -231,7 +231,7 @@ export const en: Translations = {
     roomCode: 'Room code:',
     youAreLeader: '👑 You are the leader',
     vs: 'VS',
-    leaderHint: '👑 Leader: drag (desktop) or tap (mobile) slots to move/reorder • tap team name to rename • ✕ to remove',
+    leaderHint: ['🖱️ Desktop: drag player slots to move or reorder', '📱 Mobile: tap a slot then tap another to swap or move', '✏️ Tap the team name to rename it', '✕ Use the ✕ button to kick a player'],
     selectedPlayerHint: 'Moving {name} — tap another slot or team panel to place',
     ready: '✅ Ready',
     cancelReady: '↩ Cancel Ready',

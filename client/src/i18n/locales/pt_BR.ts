@@ -49,7 +49,7 @@ export const ptBR: Translations = {
     roomCode: 'Código da sala:',
     youAreLeader: '👑 Você é o líder',
     vs: 'VS',
-    leaderHint: '👑 Líder: arraste (desktop) ou toque (mobile) nos slots para mover/reordenar • toque no nome do time para renomear • ✕ para remover',
+    leaderHint: ['🖱️ Desktop: arraste os slots para mover ou reordenar', '📱 Mobile: toque em um slot e depois em outro para trocar ou mover', '✏️ Toque no nome do time para renomear', '✕ Use o botão ✕ para remover um jogador'],
     selectedPlayerHint: 'Movendo {name} — toque em outro slot ou painel do time para colocar',
     ready: '✅ Pronto',
     cancelReady: '↩ Cancelar Pronto',

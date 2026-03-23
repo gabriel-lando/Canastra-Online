@@ -188,7 +188,7 @@ function App() {
 
   if (appPhase === 'roomSelect') {
     return (
-      <div className="app">
+      <div className="app is-lobby">
         <LanguageSwitcher />
         {errorMsg && (
           <div className="global-error" onClick={() => setErrorMsg(null)}>
@@ -217,7 +217,7 @@ function App() {
   };
 
   return (
-    <div className="app">
+    <div className={`app${gameState.phase === 'lobby' ? ' is-lobby' : ''}`}>
       <LanguageSwitcher />
       {errorMsg && (
         <div className="global-error" onClick={() => setErrorMsg(null)}>

@@ -380,19 +380,71 @@ body,
 
 /* Leader controls */
 .leader-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   background: #7c5f00;
   color: var(--gold);
   border-radius: 6px;
-  padding: 0.2rem 0.6rem;
+  padding: 0.25rem 0.6rem;
   font-size: 0.85rem;
+  line-height: 1.2;
+}
+.leader-hint-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   margin-top: 0.4rem;
 }
-.leader-hint {
+.leader-hint-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 50%;
+  border: 1px solid var(--gold);
+  background: transparent;
+  color: var(--gold);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.leader-hint-btn:hover {
+  background: var(--gold);
+  color: #000;
+}
+.leader-hint-popover {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--card-bg, #1e1e2e);
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
   font-size: 0.82rem;
-  color: var(--gray-400);
-  text-align: center;
-  margin: 0.3rem 0 0.6rem;
+  color: var(--gray-200);
+  white-space: normal;
+  width: max-content;
+  max-width: min(340px, 90vw);
+  z-index: 200;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  text-align: left;
+  line-height: 1.5;
+}
+.leader-hint-list {
+  margin: 0;
+  padding: 0 0 0 1.1rem;
+  list-style: disc;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
 }
 .leader-draggable {
   cursor: grab;
@@ -1325,22 +1377,70 @@ body,
   }
 
   /* Name entry */
+  .name-entry {
+    height: 100dvh;
+    min-height: unset;
+    overflow: hidden;
+    padding: 0.75rem;
+    align-items: flex-start;
+    padding-top: max(1.5rem, env(safe-area-inset-top, 0px));
+  }
   .name-entry-card {
-    padding: 1.5rem 1.25rem;
+    padding: 1.25rem 1.1rem;
+    margin: auto 0;
   }
   .name-entry-card h1 {
-    font-size: 1.9rem;
+    font-size: 1.75rem;
+    margin-bottom: 0.3rem;
+  }
+  .name-entry-card > p {
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
   }
 
   /* Room select */
   .room-select {
-    padding: 1rem 0.75rem;
+    height: 100dvh;
+    min-height: unset;
+    overflow: hidden;
+    padding: 0.75rem;
+    align-items: flex-start;
   }
   .room-select-card {
-    padding: 1.25rem 1rem;
+    padding: 1rem 1rem;
+    max-height: calc(100dvh - 1.5rem);
+    overflow-y: auto;
+    margin: auto 0;
+  }
+  .room-select-header {
+    margin-bottom: 0.75rem;
   }
   .room-select-header h1 {
     font-size: 1.5rem;
+  }
+  .room-select-greeting {
+    font-size: 0.88rem;
+  }
+  .room-select-main {
+    gap: 0.6rem;
+  }
+  .room-actions {
+    gap: 0.4rem;
+  }
+  .btn-room-action {
+    padding: 0.6rem 1rem;
+  }
+  .public-rooms-section {
+    padding-top: 0.6rem;
+  }
+  .public-rooms-header {
+    margin-bottom: 0.4rem;
+  }
+  .rooms-list {
+    max-height: 160px;
+  }
+  .room-select-sub {
+    gap: 0.6rem;
   }
   .created-code {
     font-size: 1.5rem;
@@ -1520,9 +1620,12 @@ body,
     font-size: 0.78rem;
   }
 
-  /* Language switcher — hide during the game to save space */
+  /* Language switcher — hide during the game to save space, but show in lobby */
   .app .lang-switcher {
     display: none;
+  }
+  .app.is-lobby .lang-switcher {
+    display: inline-flex;
   }
 
   /* Other players — hide the mini card row, keep the info bar */
