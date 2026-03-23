@@ -136,6 +136,50 @@ export interface Translations {
     seqWildcardMajority: string;
     seqInvalid: string;
   };
+  errors: {
+    // Connection / room
+    invalidMessageFormat: string;
+    playerAlreadyConnected: string;
+    nameLength: string;
+    nameInUse: string;
+    mustJoinFirst: string;
+    unknownMessageType: string;
+    // Leader-only actions
+    leaderOnlyMove: string;
+    leaderOnlyKick: string;
+    leaderOnlyRename: string;
+    leaderOnlyReorder: string;
+    // Player management
+    playerNotFound: string;
+    // Game / lobby state
+    gameAlreadyStarted: string;
+    gameFull: string;
+    nameTaken: string;
+    notInLobby: string;
+    teamFull: string;
+    playersSameTeam: string;
+    kickOnlyInLobby: string;
+    // Gameplay
+    notYourTurn: string;
+    alreadyDrew: string;
+    deckEmpty: string;
+    discardEmpty: string;
+    mustDrawFromStock: string;
+    mustDrawFirst: string;
+    cardsNotInHand: string;
+    cardNotInHand: string;
+    noCanastaNeedCard: string;
+    meldNotFound: string;
+    cannotDiscardTakenCard: string;
+    needCanastaToGoOut: string;
+    mustPlayAllCards: string;
+    firstLayDownMinScore: string;
+    // Room dissolution / kick
+    leaderLeft: string;
+    reconnectTimeout: string;
+    kickedByLeader: string;
+    roomNotFound: string;
+  };
 }
 
 export const en: Translations = {
@@ -294,5 +338,45 @@ export const en: Translations = {
     seqNotEnoughWildcards: 'Not enough wildcards to fill gaps in sequence',
     seqWildcardMajority: 'Wildcards cannot be majority in a sequence',
     seqInvalid: 'Invalid sequence combination',
+  },
+
+  // Server error codes
+  errors: {
+    invalidMessageFormat: 'Invalid message format',
+    playerAlreadyConnected: 'Player is already connected',
+    nameLength: 'Name must be between 2 and 20 characters',
+    nameInUse: 'Name already in use in this room',
+    mustJoinFirst: 'Must join the room first',
+    unknownMessageType: 'Unknown message type',
+    leaderOnlyMove: 'Only the leader can move players',
+    leaderOnlyKick: 'Only the leader can kick players',
+    leaderOnlyRename: 'Only the leader can rename teams',
+    leaderOnlyReorder: 'Only the leader can reorder players',
+    playerNotFound: 'Player not found',
+    gameAlreadyStarted: 'Game has already started',
+    gameFull: 'The room is full',
+    nameTaken: 'Name already taken',
+    notInLobby: 'This action is only available in the lobby',
+    teamFull: 'Team is full',
+    playersSameTeam: 'Players must be on the same team',
+    kickOnlyInLobby: 'Players can only be kicked in the lobby',
+    notYourTurn: 'It is not your turn',
+    alreadyDrew: 'You have already drawn this turn',
+    deckEmpty: 'The deck is empty',
+    discardEmpty: 'The discard pile is empty',
+    mustDrawFromStock: 'Must draw from stock (1 card in hand and 1 in discard)',
+    mustDrawFirst: 'You must draw a card first',
+    cardsNotInHand: 'Some of the selected cards are not in your hand',
+    cardNotInHand: 'That card is not in your hand',
+    noCanastaNeedCard: 'No canasta: must keep at least 1 card in hand after discarding',
+    meldNotFound: 'Meld not found',
+    cannotDiscardTakenCard: 'Cannot discard the card just taken from the discard pile',
+    needCanastaToGoOut: 'Your team needs at least one canasta to go out',
+    mustPlayAllCards: 'Must play all cards to go out (or discard the last one)',
+    firstLayDownMinScore: "First lay-down in 'Buraco' must score at least 100 points",
+    leaderLeft: 'The leader left the room. The room has been closed.',
+    reconnectTimeout: 'A player did not reconnect in time. The match has been cancelled.',
+    kickedByLeader: 'You were removed by the room leader.',
+    roomNotFound: 'Room not found or inaccessible.',
   },
 };

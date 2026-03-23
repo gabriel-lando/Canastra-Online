@@ -8,6 +8,19 @@ import { RoundEnd, GameOver } from './components/RoundEnd';
 import { RoomSelect } from './components/RoomSelect';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
 import { useTranslation } from './i18n';
+import type { Translations } from './i18n/locales/en';
+
+function resolveMessage(raw: string, t: Translations): string {
+  if (raw.startsWith('errors.')) {
+    const key = raw.slice('errors.'.length) as keyof Translations['errors'];
+    return t.errors[key] ?? raw;
+  }
+  if (raw.startsWith('validation.')) {
+    const key = raw.slice('validation.'.length) as keyof Translations['validation'];
+    return t.validation[key] ?? raw;
+  }
+  return raw;
+}
 
 type AppPhase = 'nameEntry' | 'roomSelect' | 'game';
 
@@ -31,6 +44,7 @@ function App() {
   const errorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showError = useCallback((msg: string) => {
+    // Store the raw key or message — resolveMessage() translates at render time
     setErrorMsg(msg);
     if (errorTimer.current) clearTimeout(errorTimer.current);
     errorTimer.current = setTimeout(() => setErrorMsg(null), 4000);
@@ -70,8 +84,8 @@ function App() {
           console.groupEnd();
         }
       } else if (msg.type === 'kicked') {
-        // Server kicked us — save reason, clear session, go back to name entry
-        const reason = msg.reason;
+        // Server kicked us — store raw key, translate at render time
+        const rawReason = msg.reason;
         socket.clearSession();
         socket.disconnect();
         setAppPhase('nameEntry');
@@ -80,15 +94,11 @@ function App() {
         setPlayerId(null);
         setPublicId(null);
         setConnecting(false);
-        setKickedReason(reason);
-        showError(reason);
+        setKickedReason(rawReason);
+        showError(rawReason);
       } else if (msg.type === 'error') {
-        if (msg.message.startsWith('validation.')) {
-          const subkey = msg.message.slice('validation.'.length) as keyof typeof t.validation;
-          showError(t.validation[subkey] ?? msg.message);
-        } else {
-          showError(msg.message);
-        }
+        // Store raw key — resolveMessage() translates at render time
+        showError(msg.message);
         setConnecting(false);
       }
     });
@@ -146,7 +156,7 @@ function App() {
         {kickedReason && (
           <div className="kicked-notification" onClick={() => setKickedReason(null)}>
             <strong>{t.paused.cancelledTitle}</strong>
-            <span>{kickedReason}</span>
+            <span>{resolveMessage(kickedReason, t)}</span>
             <span className="kicked-dismiss">✕</span>
           </div>
         )}
@@ -182,7 +192,7 @@ function App() {
         <LanguageSwitcher />
         {errorMsg && (
           <div className="global-error" onClick={() => setErrorMsg(null)}>
-            ⚠️ {errorMsg}
+            ⚠️ {resolveMessage(errorMsg, t)}
           </div>
         )}
         <RoomSelect
@@ -211,7 +221,7 @@ function App() {
       <LanguageSwitcher />
       {errorMsg && (
         <div className="global-error" onClick={() => setErrorMsg(null)}>
-          ⚠️ {errorMsg}
+          ⚠️ {resolveMessage(errorMsg, t)}
         </div>
       )}
 

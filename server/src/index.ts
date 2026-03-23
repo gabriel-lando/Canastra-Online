@@ -149,7 +149,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
     try {
       msg = JSON.parse(raw.toString()) as ClientMessage;
     } catch {
-      send(ws, { type: 'error', message: 'Invalid message format' });
+      send(ws, { type: 'error', message: 'errors.invalidMessageFormat' });
       return;
     }
 
@@ -169,7 +169,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
         // Prevent duplicate active connection for the same player
         const existingWs = room.connections.get(entry.playerId);
         if (existingWs && existingWs.readyState === WebSocket.OPEN) {
-          send(ws, { type: 'error', message: 'Jogador já está conectado' });
+          send(ws, { type: 'error', message: 'errors.playerAlreadyConnected' });
           return;
         }
 
@@ -210,7 +210,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
       // ── New join path ──
       const name = msg.name?.trim();
       if (!name || name.length < 2 || name.length > 20) {
-        send(ws, { type: 'error', message: 'Name must be 2-20 characters' });
+        send(ws, { type: 'error', message: 'errors.nameLength' });
         return;
       }
 
@@ -222,7 +222,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
       if (existingPrivate) {
         const existingConn = room.connections.get(room.publicToPrivate.get(existingPrivate.publicId) ?? '');
         if (existingConn && existingConn.readyState === WebSocket.OPEN) {
-          send(ws, { type: 'error', message: 'Nome já está em uso nesta sala' });
+          send(ws, { type: 'error', message: 'errors.nameInUse' });
           return;
         }
       }
@@ -266,7 +266,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
 
     // All other messages require an authenticated player
     if (!playerId) {
-      send(ws, { type: 'error', message: 'Must join first' });
+      send(ws, { type: 'error', message: 'errors.mustJoinFirst' });
       return;
     }
 
@@ -315,7 +315,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
 
       case 'movePlayer': {
         if (!isLeader) {
-          send(ws, { type: 'error', message: 'Apenas o líder pode mover jogadores' });
+          send(ws, { type: 'error', message: 'errors.leaderOnlyMove' });
           return;
         }
         const r = room.game.movePlayerToTeam(msg.targetPublicId, msg.teamId);
@@ -329,12 +329,12 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
 
       case 'kickPlayer': {
         if (!isLeader) {
-          send(ws, { type: 'error', message: 'Apenas o líder pode expulsar jogadores' });
+          send(ws, { type: 'error', message: 'errors.leaderOnlyKick' });
           return;
         }
         const targetPrivId = room.publicToPrivate.get(msg.targetPublicId);
         if (!targetPrivId) {
-          send(ws, { type: 'error', message: 'Jogador não encontrado' });
+          send(ws, { type: 'error', message: 'errors.playerNotFound' });
           return;
         }
         const r = room.game.removePlayer(msg.targetPublicId);
@@ -344,7 +344,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
         }
         // Notify the kicked player
         const targetWs = room.connections.get(targetPrivId);
-        if (targetWs) send(targetWs, { type: 'kicked', reason: 'Você foi removido pelo líder da sala' });
+        if (targetWs) send(targetWs, { type: 'kicked', reason: 'errors.kickedByLeader' });
         // Clean up
         room.connections.delete(targetPrivId);
         room.publicToPrivate.delete(msg.targetPublicId);
@@ -361,7 +361,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
 
       case 'renameTeam': {
         if (!isLeader) {
-          send(ws, { type: 'error', message: 'Apenas o líder pode renomear times' });
+          send(ws, { type: 'error', message: 'errors.leaderOnlyRename' });
           return;
         }
         const safeName = msg.name
@@ -376,7 +376,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
 
       case 'swapTeamOrder': {
         if (!isLeader) {
-          send(ws, { type: 'error', message: 'Apenas o líder pode reordenar jogadores' });
+          send(ws, { type: 'error', message: 'errors.leaderOnlyReorder' });
           return;
         }
         const r = room.game.swapTeamOrder(msg.publicIdA, msg.publicIdB);
@@ -449,7 +449,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
       }
 
       default:
-        send(ws, { type: 'error', message: 'Unknown message type' });
+        send(ws, { type: 'error', message: 'errors.unknownMessageType' });
     }
   });
 
@@ -468,7 +468,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
       if (phase === 'lobby') {
         // If the leader leaves the lobby, dissolve the room immediately
         if (leavingPublicId === room.leaderId) {
-          dissolveRoom(room, 'O líder saiu da sala. A sala foi encerrada.');
+          dissolveRoom(room, 'errors.leaderLeft');
           return;
         }
         broadcastRoom();
@@ -485,7 +485,7 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
       const t = setTimeout(() => {
         room.disconnectTimers.delete(playerId!);
         room.disconnectDeadlines.delete(playerId!);
-        dissolveRoom(room, 'Um jogador não reconectou a tempo. A partida foi cancelada.');
+        dissolveRoom(room, 'errors.reconnectTimeout');
       }, TIMEOUT_MS);
       room.disconnectTimers.set(playerId, t);
       room.disconnectDeadlines.set(playerId, deadline);
@@ -545,7 +545,7 @@ app.post('/api/rooms/:code/next-round', (req, res) => {
 
 // ─── Static frontend ──────────────────────────────────────────────────────────
 
-const distPath = path.join(__dirname, '../../dist');
+const distPath = path.join(__dirname, '../../client/dist');
 app.use(express.static(distPath));
 app.get('*', (_req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));

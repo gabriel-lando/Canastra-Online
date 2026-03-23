@@ -35,8 +35,8 @@ COPY --from=backend-builder /app/server/dist ./server/dist
 COPY --from=backend-builder /app/server/node_modules ./server/node_modules
 COPY server/package.json ./server/
 
-# Copy built frontend into dist/ (served as static files by express)
-COPY --from=frontend-builder /app/client/dist ./dist
+# Copy built frontend into client/dist/ (served as static files by express)
+COPY --from=frontend-builder /app/client/dist ./client/dist
 
 ENV NODE_ENV=production
 ENV PORT=3000

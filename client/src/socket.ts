@@ -55,7 +55,7 @@ class GameSocket {
     this.ws.onclose = () => {
       if (!didOpen) {
         // Failed to connect — room not found or server unreachable
-        this.listeners.forEach((l) => l({ type: 'error', message: 'Sala não encontrada ou inacessível' }));
+        this.listeners.forEach((l) => l({ type: 'error', message: 'errors.roomNotFound' }));
         return;
       }
       if (!this.closed) {

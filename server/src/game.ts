@@ -50,10 +50,10 @@ export class Game {
   }
 
   addPlayer(id: string, publicId: string, name: string): { success: boolean; error?: string } {
-    if (this.state.public.phase !== 'lobby') return { success: false, error: 'Game already started' };
-    if (this.state.players.length >= 4) return { success: false, error: 'Game is full' };
+    if (this.state.public.phase !== 'lobby') return { success: false, error: 'errors.gameAlreadyStarted' };
+    if (this.state.players.length >= 4) return { success: false, error: 'errors.gameFull' };
     if (this.state.players.find((p) => p.name.toLowerCase() === name.toLowerCase())) {
-      return { success: false, error: 'Name already taken' };
+      return { success: false, error: 'errors.nameTaken' };
     }
 
     const seatIndex = this.state.players.length as 0 | 1 | 2 | 3;
@@ -105,22 +105,22 @@ export class Game {
   }
 
   setReady(playerId: string, ready: boolean): { success: boolean; error?: string } {
-    if (this.state.public.phase !== 'lobby') return { success: false, error: 'Not in lobby' };
+    if (this.state.public.phase !== 'lobby') return { success: false, error: 'errors.notInLobby' };
     const p = this.state.players.find((x) => x.id === playerId);
-    if (!p) return { success: false, error: 'Player not found' };
+    if (!p) return { success: false, error: 'errors.playerNotFound' };
     p.status = ready ? 'ready' : 'waiting';
     this.updateSyncedPlayer(p);
     return { success: true };
   }
 
   selectTeam(playerId: string, teamId: 0 | 1): { success: boolean; error?: string } {
-    if (this.state.public.phase !== 'lobby') return { success: false, error: 'Not in lobby' };
+    if (this.state.public.phase !== 'lobby') return { success: false, error: 'errors.notInLobby' };
     const p = this.state.players.find((x) => x.id === playerId);
-    if (!p) return { success: false, error: 'Player not found' };
+    if (!p) return { success: false, error: 'errors.playerNotFound' };
 
     // Check team size (max 2 per team)
     const teamCount = this.state.players.filter((x) => x.id !== playerId && x.teamId === teamId).length;
-    if (teamCount >= 2) return { success: false, error: 'Team is full' };
+    if (teamCount >= 2) return { success: false, error: 'errors.teamFull' };
 
     p.teamId = teamId;
     const pub = this.state.public.players.find((x: Player) => x.id === playerId);
@@ -130,9 +130,9 @@ export class Game {
 
   /** Leader moves any player to a different team (no capacity limit — leader has full control). */
   movePlayerToTeam(targetPublicId: string, teamId: 0 | 1): { success: boolean; error?: string } {
-    if (this.state.public.phase !== 'lobby') return { success: false, error: 'Not in lobby' };
+    if (this.state.public.phase !== 'lobby') return { success: false, error: 'errors.notInLobby' };
     const p = this.state.players.find((x) => x.publicId === targetPublicId);
-    if (!p) return { success: false, error: 'Player not found' };
+    if (!p) return { success: false, error: 'errors.playerNotFound' };
     p.teamId = teamId;
     const pub = this.state.public.players.find((x: Player) => x.publicId === targetPublicId);
     if (pub) pub.teamId = teamId;
@@ -141,11 +141,11 @@ export class Game {
 
   /** Leader swaps the within-team seat order of two players (defines turn order). */
   swapTeamOrder(publicIdA: string, publicIdB: string): { success: boolean; error?: string } {
-    if (this.state.public.phase !== 'lobby') return { success: false, error: 'Not in lobby' };
+    if (this.state.public.phase !== 'lobby') return { success: false, error: 'errors.notInLobby' };
     const pA = this.state.players.find((x) => x.publicId === publicIdA);
     const pB = this.state.players.find((x) => x.publicId === publicIdB);
-    if (!pA || !pB) return { success: false, error: 'Player not found' };
-    if (pA.teamId !== pB.teamId) return { success: false, error: 'Players must be on the same team' };
+    if (!pA || !pB) return { success: false, error: 'errors.playerNotFound' };
+    if (pA.teamId !== pB.teamId) return { success: false, error: 'errors.playersSameTeam' };
     const tmpSeat = pA.seatIndex;
     pA.seatIndex = pB.seatIndex;
     pB.seatIndex = tmpSeat;
@@ -161,9 +161,9 @@ export class Game {
 
   /** Leader removes a player from the lobby. */
   removePlayer(targetPublicId: string): { success: boolean; error?: string } {
-    if (this.state.public.phase !== 'lobby') return { success: false, error: 'Can only kick in lobby' };
+    if (this.state.public.phase !== 'lobby') return { success: false, error: 'errors.kickOnlyInLobby' };
     const idx = this.state.players.findIndex((x) => x.publicId === targetPublicId);
-    if (idx === -1) return { success: false, error: 'Player not found' };
+    if (idx === -1) return { success: false, error: 'errors.playerNotFound' };
     this.state.players.splice(idx, 1);
     this.state.public.players = this.state.public.players.filter((x: Player) => x.publicId !== targetPublicId);
     return { success: true };
@@ -269,11 +269,11 @@ export class Game {
   drawFromStock(playerId: string): { success: boolean; error?: string } {
     const gs = this.state.public;
     const current = this.getCurrentPlayer();
-    if (!current || current.id !== playerId) return { success: false, error: 'Not your turn' };
-    if (gs.turnPhase !== 'mustDraw') return { success: false, error: 'Already drew' };
+    if (!current || current.id !== playerId) return { success: false, error: 'errors.notYourTurn' };
+    if (gs.turnPhase !== 'mustDraw') return { success: false, error: 'errors.alreadyDrew' };
 
     if (this.state.stock.length === 0) {
-      return { success: false, error: 'O baralho acabou' };
+      return { success: false, error: 'errors.deckEmpty' };
     }
 
     const card = this.state.stock.pop()!;
@@ -295,13 +295,13 @@ export class Game {
   takeDiscard(playerId: string): { success: boolean; error?: string } {
     const gs = this.state.public;
     const current = this.getCurrentPlayer();
-    if (!current || current.id !== playerId) return { success: false, error: 'Not your turn' };
-    if (gs.turnPhase !== 'mustDraw') return { success: false, error: 'Already drew' };
-    if (gs.discardPile.length === 0) return { success: false, error: 'Discard pile is empty' };
+    if (!current || current.id !== playerId) return { success: false, error: 'errors.notYourTurn' };
+    if (gs.turnPhase !== 'mustDraw') return { success: false, error: 'errors.alreadyDrew' };
+    if (gs.discardPile.length === 0) return { success: false, error: 'errors.discardEmpty' };
 
     // Special case: only 1 card in hand and only 1 card in discard -> must draw from stock
     if (current.hand.length === 1 && gs.discardPile.length === 1) {
-      return { success: false, error: 'Must draw from stock (1 card in hand and 1 in discard)' };
+      return { success: false, error: 'errors.mustDrawFromStock' };
     }
 
     const pile = [...gs.discardPile];
@@ -319,14 +319,14 @@ export class Game {
   layDown(playerId: string, cardIds: string[], meldType?: MeldType, targetMeldId?: string): { success: boolean; error?: string } {
     const gs = this.state.public;
     const current = this.getCurrentPlayer();
-    if (!current || current.id !== playerId) return { success: false, error: 'Not your turn' };
-    if (gs.turnPhase === 'mustDraw') return { success: false, error: 'Must draw first' };
+    if (!current || current.id !== playerId) return { success: false, error: 'errors.notYourTurn' };
+    if (gs.turnPhase === 'mustDraw') return { success: false, error: 'errors.mustDrawFirst' };
 
     const team = gs.teams[current.teamId];
 
     // Find cards in hand
     const cards = cardIds.map((id) => current.hand.find((c: Card) => c.id === id)).filter(Boolean) as Card[];
-    if (cards.length !== cardIds.length) return { success: false, error: 'Some cards not in hand' };
+    if (cards.length !== cardIds.length) return { success: false, error: 'errors.cardsNotInHand' };
 
     if (targetMeldId) {
       // Add to existing meld
@@ -359,7 +359,7 @@ export class Game {
     // (so the player can still discard and keep 1). Exception: creating a canasta now is fine.
     const willHaveCanasta = team.hasCanasta || isCanasta;
     if (!willHaveCanasta && current.hand.length - cardIds.length < 1) {
-      return { success: false, error: 'Sem canastra: precisam sobrar pelo menos 1 carta na mão após descartar' };
+      return { success: false, error: 'errors.noCanastaNeedCard' };
     }
 
     const meld: Meld = {
@@ -393,7 +393,7 @@ export class Game {
 
   private addToExistingMeld(player: PlayerPrivate, team: TeamState, cards: Card[], meldId: string): { success: boolean; error?: string } {
     const meld = team.melds.find((m: Meld) => m.id === meldId);
-    if (!meld) return { success: false, error: 'Meld not found' };
+    if (!meld) return { success: false, error: 'errors.meldNotFound' };
 
     const combined = [...meld.cards, ...cards];
     let validation;
@@ -409,7 +409,7 @@ export class Game {
     // Enforce minimum-hand rule before committing
     const willHaveCanasta = team.hasCanasta || isCanasta;
     if (!willHaveCanasta && player.hand.length - cards.length < 1) {
-      return { success: false, error: 'Sem canastra: precisam sobrar pelo menos 1 carta na mão após descartar' };
+      return { success: false, error: 'errors.noCanastaNeedCard' };
     }
 
     meld.cards = meld.type === 'sequence' ? sortSequenceCards(combined) : combined;
@@ -450,7 +450,7 @@ export class Game {
     }
 
     if (total < 100) {
-      return `First lay-down in Buraco must score at least 100 points (scored ${total})`;
+      return 'errors.firstLayDownMinScore';
     }
     return null;
   }
@@ -465,22 +465,22 @@ export class Game {
   discard(playerId: string, cardId: string): { success: boolean; error?: string } {
     const gs = this.state.public;
     const current = this.getCurrentPlayer();
-    if (!current || current.id !== playerId) return { success: false, error: 'Not your turn' };
-    if (gs.turnPhase === 'mustDraw') return { success: false, error: 'Must draw first' };
+    if (!current || current.id !== playerId) return { success: false, error: 'errors.notYourTurn' };
+    if (gs.turnPhase === 'mustDraw') return { success: false, error: 'errors.mustDrawFirst' };
 
     const cardIndex = current.hand.findIndex((c: Card) => c.id === cardId);
-    if (cardIndex === -1) return { success: false, error: 'Card not in hand' };
+    if (cardIndex === -1) return { success: false, error: 'errors.cardNotInHand' };
 
     // Cannot discard a card that was just taken as the sole card from the discard pile
     if (gs.takenSingleDiscardCardId && gs.takenSingleDiscardCardId === cardId) {
-      return { success: false, error: 'Não pode descartar a carta que acabou de pegar do descarte' };
+      return { success: false, error: 'errors.cannotDiscardTakenCard' };
     }
 
     const team = gs.teams[current.teamId];
 
     // Without a canasta the player cannot empty their hand by discarding
     if (!team.hasCanasta && current.hand.length <= 1) {
-      return { success: false, error: 'Sem canastra: precisa manter pelo menos 1 carta na mão após descartar' };
+      return { success: false, error: 'errors.noCanastaNeedCard' };
     }
 
     const [card] = current.hand.splice(cardIndex, 1);
@@ -510,18 +510,18 @@ export class Game {
   goOut(playerId: string, discardCardId?: string): { success: boolean; error?: string } {
     const gs = this.state.public;
     const current = this.getCurrentPlayer();
-    if (!current || current.id !== playerId) return { success: false, error: 'Not your turn' };
-    if (gs.turnPhase === 'mustDraw') return { success: false, error: 'Must draw first' };
+    if (!current || current.id !== playerId) return { success: false, error: 'errors.notYourTurn' };
+    if (gs.turnPhase === 'mustDraw') return { success: false, error: 'errors.mustDrawFirst' };
 
     const team = gs.teams[current.teamId];
     if (!team.hasCanasta) {
-      return { success: false, error: 'Your team needs at least one canasta to go out' };
+      return { success: false, error: 'errors.needCanastaToGoOut' };
     }
 
     // Optionally discard
     if (discardCardId) {
       const cardIndex = current.hand.findIndex((c: Card) => c.id === discardCardId);
-      if (cardIndex === -1) return { success: false, error: 'Card not in hand' };
+      if (cardIndex === -1) return { success: false, error: 'errors.cardNotInHand' };
       const [card] = current.hand.splice(cardIndex, 1);
       gs.discardPile.push(card);
     }
@@ -529,7 +529,7 @@ export class Game {
     // Must have empty hand (or only the optional discard handles it)
     if (current.hand.length > 0) {
       // Put card back if we removed it
-      return { success: false, error: 'Must play all cards to go out (or discard the last one)' };
+      return { success: false, error: 'errors.mustPlayAllCards' };
     }
 
     current.handCount = 0;
