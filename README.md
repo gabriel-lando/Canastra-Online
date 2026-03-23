@@ -27,18 +27,15 @@ Jogo de cartas online em tempo real, baseado nas regras de Buraco/Canastra. Para
 
 ```bash
 # 1. Instalar dependências do frontend
-npm install
+cd client && npm install && cd ..
 
 # 2. Instalar dependências do backend
 cd server && npm install && cd ..
 
-# 3. Build do frontend
+# 3. Build do frontend e backend
 npm run build
 
-# 4. Build do backend
-cd server && npm run build && cd ..
-
-# 5. Iniciar o servidor (serve frontend + API na mesma porta)
+# 4. Iniciar o servidor (serve frontend + API na mesma porta)
 node server/dist/index.js
 ```
 
@@ -50,10 +47,10 @@ Em dois terminais:
 
 ```bash
 # Terminal 1 - backend em watch mode (tsx watch)
-cd server && npm run dev
+npm run dev:server
 
 # Terminal 2 - frontend com vite dev server (proxy /api → localhost:3000)
-npm run dev
+npm run dev:client
 ```
 
 ## Docker
@@ -101,26 +98,31 @@ Browser ──── WebSocket /api/ws?room=CÓDIGO ───┐
 
 ```
 /
-├── src/                        # Frontend React
-│   ├── App.tsx                 # Componente raiz + máquina de estados (nameEntry → roomSelect → game)
-│   ├── socket.ts               # Cliente WebSocket
-│   ├── types.ts                # Tipos compartilhados
-│   ├── App.css                 # Estilos globais
-│   ├── i18n/                   # Internacionalização (pt-BR padrão, en disponível)
-│   └── components/
-│       ├── RoomSelect.tsx      # Criar / listar salas públicas / entrar por código
-│       ├── Lobby.tsx           # Lobby pré-jogo com drag-and-drop de times
-│       ├── GameBoard.tsx       # Mesa de jogo principal
-│       ├── CardView.tsx        # Componente de carta individual
-│       ├── MeldView.tsx        # Componente de joguinho/canastra
-│       ├── RoundEnd.tsx        # Placar de fim de rodada e fim de jogo
-│       └── LanguageSwitcher.tsx# Alternância de idioma (🇧🇷 / 🇺🇸)
+├── client/                     # Frontend React
+│   ├── src/
+│   │   ├── App.tsx             # Componente raiz + máquina de estados (nameEntry → roomSelect → game)
+│   │   ├── socket.ts           # Cliente WebSocket
+│   │   ├── types.ts            # Tipos compartilhados
+│   │   ├── App.css             # Estilos globais
+│   │   ├── i18n/               # Internacionalização (pt-BR padrão, en disponível)
+│   │   └── components/
+│   │       ├── RoomSelect.tsx      # Criar / listar salas públicas / entrar por código
+│   │       ├── Lobby.tsx           # Lobby pré-jogo com drag-and-drop de times
+│   │       ├── GameBoard.tsx       # Mesa de jogo principal
+│   │       ├── CardView.tsx        # Componente de carta individual
+│   │       ├── MeldView.tsx        # Componente de joguinho/canastra
+│   │       ├── RoundEnd.tsx        # Placar de fim de rodada e fim de jogo
+│   │       └── LanguageSwitcher.tsx# Alternância de idioma (🇧🇷 / 🇺🇸)
+│   ├── index.html
+│   ├── vite.config.ts
+│   └── package.json
 ├── server/
 │   └── src/
 │       ├── index.ts            # Express + WebSocket server + REST API
 │       ├── game.ts             # Lógica completa do jogo
 │       ├── cards.ts            # Baralho, validações, pontuação
 │       └── types.ts            # Tipos do servidor
+├── package.json                # Scripts de orquestração (build, dev:client, dev:server)
 ├── Dockerfile                  # Build multi-stage (frontend-builder → backend-builder → production)
 ├── docker-compose.yml
 └── .dockerignore
