@@ -26,13 +26,10 @@ Jogo de cartas online em tempo real, baseado nas regras de Buraco/Canastra. Para
 ### Rodando localmente
 
 ```bash
-# 1. Instalar dependências do frontend
-cd client && npm install && cd ..
+# 1. Instalar dependências do frontend e backend
+npm run install:all
 
-# 2. Instalar dependências do backend
-cd server && npm install && cd ..
-
-# 3. Build do frontend e backend
+# 2. Build do frontend e backend
 npm run build
 
 # 4. Iniciar o servidor (serve frontend + API na mesma porta)
@@ -122,7 +119,7 @@ Browser ──── WebSocket /api/ws?room=CÓDIGO ───┐
 │       ├── game.ts             # Lógica completa do jogo
 │       ├── cards.ts            # Baralho, validações, pontuação
 │       └── types.ts            # Tipos do servidor
-├── package.json                # Scripts de orquestração (build, dev:client, dev:server)
+├── package.json                # Scripts de orquestração (install:all, build, dev:client, dev:server)
 ├── Dockerfile                  # Build multi-stage (frontend-builder → backend-builder → production)
 ├── docker-compose.yml
 └── .dockerignore
