@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { Meld } from '../types';
 import { CardView } from './CardView';
+import { useTranslation } from '../i18n';
 
 interface MeldViewProps {
   meld: Meld;
@@ -11,8 +12,9 @@ interface MeldViewProps {
 }
 
 export const MeldView: React.FC<MeldViewProps> = ({ meld, onAddCards, canAdd, onDrop, canDrop }) => {
+  const { t } = useTranslation();
   const [dragOver, setDragOver] = useState(false);
-  const label = meld.isCanasta ? (meld.isCleanCanasta ? '✨ Canastra Limpa' : '⭐ Canastra Suja') : meld.type === 'group' ? 'Grupo' : 'Sequência';
+  const label = meld.isCanasta ? (meld.isCleanCanasta ? t.meld.cleanCanasta : t.meld.dirtyCanasta) : meld.type === 'group' ? t.meld.group : t.meld.sequence;
 
   return (
     <div
@@ -38,10 +40,12 @@ export const MeldView: React.FC<MeldViewProps> = ({ meld, onAddCards, canAdd, on
     >
       <div className="meld-header">
         <span className="meld-label">{label}</span>
-        <span className="meld-count">{meld.cards.length} cartas</span>
+        <span className="meld-count">
+          {meld.cards.length} {t.meld.cards}
+        </span>
         {canAdd && onAddCards && (
           <button className="btn-sm" onClick={() => onAddCards(meld.id)}>
-            + Adicionar
+            {t.meld.addCards}
           </button>
         )}
       </div>

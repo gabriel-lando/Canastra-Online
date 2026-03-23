@@ -3,6 +3,7 @@ import type { Card, GameState } from '../types';
 import { CardView } from './CardView';
 import { MeldView } from './MeldView';
 import { isMyTurn, detectMeldType } from '../socket';
+import { useTranslation } from '../i18n';
 
 interface GameBoardProps {
   gameState: GameState;
@@ -19,6 +20,7 @@ interface GameBoardProps {
 }
 
 export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicId, onDrawFromStock, onTakeDiscard, onLayDown, onAddToMeld, onDiscard, onGoOut: _onGoOut, errorMsg }) => {
+  const { t, interpolate } = useTranslation();
   const [selectedCardIds, setSelectedCardIds] = useState<Set<string>>(new Set());
   const [discardExpanded, setDiscardExpanded] = useState(false);
   const [newCardIds, setNewCardIds] = useState<Set<string>>(new Set());
@@ -156,26 +158,20 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicI
       <div className="game-header">
         <div className="score-display">
           <div className={`score-team${me?.teamId === 0 ? ' score-mine' : ''}`}>
-            <span>{gameState.teamNames?.[0] ?? 'Time A'}</span>
+            <span>{gameState.teamNames?.[0] ?? t.game.defaultTeamA}</span>
             <strong>{gameState.teams[0].score}</strong>
-            {gameState.teams[0].inHole && <span className="in-hole-badge">🕳 No Buraco</span>}
+            {gameState.teams[0].inHole && <span className="in-hole-badge">{t.game.inHole}</span>}
           </div>
           <div className="score-sep">×</div>
           <div className={`score-team${me?.teamId === 1 ? ' score-mine' : ''}`}>
-            <span>{gameState.teamNames?.[1] ?? 'Time B'}</span>
+            <span>{gameState.teamNames?.[1] ?? t.game.defaultTeamB}</span>
             <strong>{gameState.teams[1].score}</strong>
-            {gameState.teams[1].inHole && <span className="in-hole-badge">🕳 No Buraco</span>}
+            {gameState.teams[1].inHole && <span className="in-hole-badge">{t.game.inHole}</span>}
           </div>
         </div>
         <div className="turn-indicator">
-          {myTurn ? (
-            <span className="my-turn">✨ Sua vez!</span>
-          ) : (
-            <span>
-              Vez de: <strong>{currentPlayer?.name}</strong>
-            </span>
-          )}
-          <span className="turn-phase">{gameState.turnPhase === 'mustDraw' ? '— Comprar' : gameState.turnPhase === 'canAct' ? '— Agir/Descartar' : '— Descartar'}</span>
+          {myTurn ? <span className="my-turn">{t.game.yourTurn}</span> : <span>{interpolate(t.game.theirTurn, { name: currentPlayer?.name ?? '' })}</span>}
+          <span className="turn-phase">{gameState.turnPhase === 'mustDraw' ? t.game.phaseMustDraw : gameState.turnPhase === 'canAct' ? t.game.phaseCanAct : t.game.phaseMustDiscard}</span>
         </div>
       </div>
 
@@ -194,9 +190,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicI
                 <div className="other-player-info">
                   <span className={`team-dot team-dot-${p.teamId}`} />
                   <strong>{p.name}</strong>
-                  <span className="hand-count">{p.handCount} cartas</span>
-                  {!p.connected && <span className="offline-badge">offline</span>}
-                  {isCurrentTurn && <span className="active-badge">▶ jogando</span>}
+                  <span className="hand-count">
+                    {p.handCount} {t.game.cards}
+                  </span>
+                  {!p.connected && <span className="offline-badge">{t.game.offline}</span>}
+                  {isCurrentTurn && <span className="active-badge">{t.game.playing}</span>}
                 </div>
                 <div className="other-player-cards">
                   {Array.from({ length: Math.min(p.handCount, 13) }).map((_, i) => (
@@ -211,10 +209,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicI
       {/* Center: stock + discard */}
       <div className="game-center">
         <div className="stock-area">
-          <div className={`card card-back${myTurn && gameState.turnPhase === 'mustDraw' ? ' card-clickable' : ''}`} onClick={() => myTurn && gameState.turnPhase === 'mustDraw' && onDrawFromStock()} title="Comprar do monte">
+          <div className={`card card-back${myTurn && gameState.turnPhase === 'mustDraw' ? ' card-clickable' : ''}`} onClick={() => myTurn && gameState.turnPhase === 'mustDraw' && onDrawFromStock()} title={t.game.drawFromStockTitle}>
             <span className="stock-count">{gameState.stockCount}</span>
           </div>
-          <span className="pile-label">Monte</span>
+          <span className="pile-label">{t.game.stock}</span>
         </div>
 
         <div
@@ -236,12 +234,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicI
                 setDiscardExpanded((v) => !v);
               }
             }}
-            title={gameState.discardPile.length > 0 ? (myTurn && gameState.turnPhase === 'mustDraw' ? 'Pegar descarte' : 'Ver descarte') : 'Descarte vazio'}
+            title={gameState.discardPile.length > 0 ? (myTurn && gameState.turnPhase === 'mustDraw' ? t.game.takeDiscardTitle : t.game.viewDiscardTitle) : t.game.emptyDiscardTitle}
           >
             {gameState.discardPile.length > 0 ? <CardView card={gameState.discardPile[gameState.discardPile.length - 1]} /> : <div className="card card-empty" />}
           </div>
           <span className="pile-label">
-            Descarte ({gameState.discardPile.length})
+            {interpolate(t.game.discardPile, { count: gameState.discardPile.length })}
             {gameState.discardPile.length > 1 && (
               <button className="btn-expand" onClick={() => setDiscardExpanded((v) => !v)}>
                 {discardExpanded ? '▲' : '▼'}
@@ -251,7 +249,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicI
           {discardExpanded && gameState.discardPile.length > 0 && (
             <div className="discard-expanded">
               <div className="discard-expanded-header">
-                <span>Pilha de descarte ({gameState.discardPile.length} cartas)</span>
+                <span>{interpolate(t.game.discardPileHeader, { count: gameState.discardPile.length })}</span>
                 <button className="btn-expand" onClick={() => setDiscardExpanded(false)}>
                   ✕
                 </button>
@@ -270,8 +268,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicI
       <div className="table-melds">
         <div className="table-melds-section">
           <h3>
-            {gameState.teamNames?.[0] ?? 'Time A'}
-            {me?.teamId === 0 ? ' (seu)' : ''}
+            {gameState.teamNames?.[0] ?? t.game.defaultTeamA}
+            {me?.teamId === 0 ? t.game.yourTeam : ''}
           </h3>
           <div className="melds-list">
             {gameState.teams[0].melds.map((m) => (
@@ -284,13 +282,13 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicI
                 onDrop={handleDropOnMeld}
               />
             ))}
-            {gameState.teams[0].melds.length === 0 && <span className="no-melds">Nenhuma combinação ainda</span>}
+            {gameState.teams[0].melds.length === 0 && <span className="no-melds">{t.game.noMelds}</span>}
           </div>
         </div>
         <div className="table-melds-section">
           <h3>
-            {gameState.teamNames?.[1] ?? 'Time B'}
-            {me?.teamId === 1 ? ' (seu)' : ''}
+            {gameState.teamNames?.[1] ?? t.game.defaultTeamB}
+            {me?.teamId === 1 ? t.game.yourTeam : ''}
           </h3>
           <div className="melds-list">
             {gameState.teams[1].melds.map((m) => (
@@ -303,7 +301,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicI
                 onDrop={handleDropOnMeld}
               />
             ))}
-            {gameState.teams[1].melds.length === 0 && <span className="no-melds">Nenhuma combinação ainda</span>}
+            {gameState.teams[1].melds.length === 0 && <span className="no-melds">{t.game.noMelds}</span>}
           </div>
         </div>
       </div>
@@ -311,11 +309,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicI
       {/* My hand */}
       <div className="my-hand-area">
         <div className="hand-header">
-          <h3>Sua mão ({hand.length} cartas)</h3>
+          <h3>{interpolate(t.game.yourHand, { count: hand.length })}</h3>
           <div className="hand-header-right">
-            {selectedCardIds.size > 0 && <span className="selected-info">{selectedCardIds.size} selecionada(s)</span>}
-            <button className="btn btn-ghost btn-sort" title="Ordenar cartas" onClick={() => setHandOrder(defaultSortHand(hand).map((c) => c.id))}>
-              ⇅ Ordenar
+            {selectedCardIds.size > 0 && <span className="selected-info">{interpolate(t.game.selected, { count: selectedCardIds.size })}</span>}
+            <button className="btn btn-ghost btn-sort" title={t.game.sortTitle} onClick={() => setHandOrder(defaultSortHand(hand).map((c) => c.id))}>
+              {t.game.sort}
             </button>
           </div>
         </div>
@@ -341,11 +339,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicI
             {gameState.turnPhase === 'mustDraw' && (
               <div className="action-group">
                 <button className="btn btn-primary" onClick={onDrawFromStock}>
-                  📥 Comprar do Monte
+                  {t.game.drawFromStockBtn}
                 </button>
                 {gameState.discardPile.length > 0 && (
                   <button className="btn btn-secondary" onClick={onTakeDiscard}>
-                    🗑 Pegar Descarte ({gameState.discardPile.length})
+                    {interpolate(t.game.takeDiscardBtn, { count: gameState.discardPile.length })}
                   </button>
                 )}
               </div>
@@ -357,19 +355,19 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicI
                   (() => {
                     const selectedCards = hand.filter((c) => selectedCardIds.has(c.id));
                     const detected = detectMeldType(selectedCards);
-                    const label = detected === 'group' ? '🃏 Baixar Grupo' : detected === 'sequence' ? '🔗 Baixar Sequência' : '🃏 Baixar';
+                    const label = detected === 'group' ? t.game.layDownGroup : detected === 'sequence' ? t.game.layDownSequence : t.game.layDown;
                     return (
-                      <button className="btn btn-success" onClick={handleLayDown} disabled={detected === null} title={detected === null ? 'Seleção inválida para grupo ou sequência' : undefined}>
+                      <button className="btn btn-success" onClick={handleLayDown} disabled={detected === null} title={detected === null ? t.game.invalidSelection : undefined}>
                         {label}
                       </button>
                     );
                   })()}
                 {selectedCardIds.size === 1 && (
                   <button className="btn btn-warning" onClick={() => handleDiscard([...selectedCardIds][0])}>
-                    ↩ Descartar carta selecionada
+                    {t.game.discardSelected}
                   </button>
                 )}
-                {selectedCardIds.size === 0 && <span className="hint">Selecione cartas para baixar, ou 1 para descartar</span>}
+                {selectedCardIds.size === 0 && <span className="hint">{t.game.selectHint}</span>}
               </div>
             )}
           </div>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { GameState, Player } from '../types';
+import { useTranslation } from '../i18n';
 
 interface LobbyProps {
   gameState: GameState;
@@ -16,6 +17,7 @@ interface LobbyProps {
 }
 
 export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, onReady, onUnready, onSelectTeam, onMovePlayer, onKickPlayer, onRenameTeam, onSwapTeamOrder }) => {
+  const { t, interpolate } = useTranslation();
   const me = gameState.players.find((p) => p.publicId === myPublicId);
   const isReady = me?.status === 'ready';
   const isLeader = gameState.leaderId === myPublicId;
@@ -28,7 +30,7 @@ export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, o
   const canStart = readyCount === 4 && team0.length === 2 && team1.length === 2;
 
   const [dragOverTeam, setDragOverTeam] = useState<0 | 1 | null>(null);
-  const teamNames = gameState.teamNames ?? ['Time A', 'Time B'];
+  const teamNames = gameState.teamNames ?? [t.lobby.defaultTeamA, t.lobby.defaultTeamB];
 
   const handleDragStart = (e: React.DragEvent, publicId: string, fromTeam: 0 | 1) => {
     e.dataTransfer.setData('publicId', publicId);
@@ -65,15 +67,15 @@ export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, o
     <div className="lobby">
       <div className="lobby-header">
         <h1>Canastra Online</h1>
-        <p className="lobby-subtitle">Aguardando jogadores... ({gameState.players.length}/4)</p>
+        <p className="lobby-subtitle">{interpolate(t.lobby.waiting, { count: gameState.players.length })}</p>
         <div className="lobby-room-code">
-          <span>Código da sala:</span>
+          <span>{t.lobby.roomCode}</span>
           <code>{roomCode}</code>
           <button className="btn btn-ghost" style={{ padding: '0.1rem 0.4rem', fontSize: '0.8rem' }} onClick={() => navigator.clipboard.writeText(roomCode).catch(() => {})}>
             📋
           </button>
         </div>
-        {isLeader && <span className="leader-badge">👑 Você é o líder</span>}
+        {isLeader && <span className="leader-badge">{t.lobby.youAreLeader}</span>}
       </div>
 
       <div className="teams-grid">
@@ -97,7 +99,7 @@ export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, o
           onKick={onKickPlayer}
           onRenameTeam={(name) => onRenameTeam(0, name)}
         />
-        <div className="teams-vs">VS</div>
+        <div className="teams-vs">{t.lobby.vs}</div>
         <TeamPanel
           teamId={1}
           teamName={teamNames[1]}
@@ -120,31 +122,31 @@ export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, o
         />
       </div>
 
-      {isLeader && <p className="leader-hint">👑 Líder: arraste entre times para mover • arraste dentro do time para reordenar • clique no nome do time para renomear • ✕ para remover</p>}
+      {isLeader && <p className="leader-hint">{t.lobby.leaderHint}</p>}
 
       <div className="lobby-actions">
         {!isReady ? (
           <button className="btn btn-primary" onClick={onReady} disabled={!me}>
-            ✅ Pronto
+            {t.lobby.ready}
           </button>
         ) : (
           <button className="btn btn-secondary" onClick={onUnready}>
-            ↩ Cancelar Pronto
+            {t.lobby.cancelReady}
           </button>
         )}
       </div>
 
-      {canStart && <div className="lobby-starting">🚀 Todos prontos! Iniciando jogo...</div>}
+      {canStart && <div className="lobby-starting">{t.lobby.allReady}</div>}
 
       <div className="lobby-players-status">
-        <h3>Status dos Jogadores</h3>
+        <h3>{t.lobby.playersStatus}</h3>
         {gameState.players.map((p) => (
           <div key={p.publicId} className={`player-status-row${p.publicId === myPublicId ? ' is-me' : ''}`}>
             <span className="player-name">
-              {p.name} {p.publicId === myPublicId ? '(você)' : ''}
+              {p.name} {p.publicId === myPublicId ? t.lobby.you : ''}
               {gameState.leaderId === p.publicId && ' 👑'}
             </span>
-            <span className={`status-badge status-${p.status}`}>{p.status === 'ready' ? '✅ Pronto' : '⏳ Aguardando'}</span>
+            <span className={`status-badge status-${p.status}`}>{p.status === 'ready' ? t.lobby.readyStatus : t.lobby.waitingStatus}</span>
             <span className={`team-badge team-${p.teamId}`}>{teamNames[p.teamId]}</span>
           </div>
         ))}
@@ -172,6 +174,7 @@ interface TeamPanelProps {
 }
 
 const TeamPanel: React.FC<TeamPanelProps> = ({ teamId, teamName, players, myPublicId, isLeader, canJoin, isDragOver, onJoin, onDragStart, onDragOver, onDragLeave, onDrop, onDropSlot, onKick, onRenameTeam }) => {
+  const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(teamName);
   const [dragOverSlot, setDragOverSlot] = useState<string | null>(null);
@@ -209,7 +212,7 @@ const TeamPanel: React.FC<TeamPanelProps> = ({ teamId, teamName, players, myPubl
       ) : (
         <h2
           className={isLeader ? 'team-name-editable' : ''}
-          title={isLeader ? 'Clique para renomear' : undefined}
+          title={isLeader ? t.lobby.clickToRename : undefined}
           onClick={
             isLeader
               ? () => {
@@ -254,7 +257,7 @@ const TeamPanel: React.FC<TeamPanelProps> = ({ teamId, teamName, players, myPubl
             <div className="slot-right">
               <span className={`slot-connected${p.connected ? '' : ' offline'}`}>{p.connected ? '🟢' : '🔴'}</span>
               {isLeader && p.publicId !== myPublicId && (
-                <button className="btn-kick" title="Remover jogador" onClick={() => onKick(p.publicId)}>
+                <button className="btn-kick" title={t.lobby.kickPlayer} onClick={() => onKick(p.publicId)}>
                   ✕
                 </button>
               )}
@@ -263,13 +266,13 @@ const TeamPanel: React.FC<TeamPanelProps> = ({ teamId, teamName, players, myPubl
         ))}
         {Array.from({ length: 2 - players.length }).map((_, i) => (
           <div key={i} className="team-slot empty">
-            <span>— Vazia —</span>
+            <span>{t.lobby.emptySlot}</span>
           </div>
         ))}
       </div>
       {canJoin && (
         <button className="btn btn-outline" onClick={onJoin}>
-          Entrar neste time
+          {t.lobby.joinTeam}
         </button>
       )}
     </div>

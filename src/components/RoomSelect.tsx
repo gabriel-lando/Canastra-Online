@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from '../i18n';
 
 interface PublicRoom {
   code: string;
@@ -14,6 +15,7 @@ interface RoomSelectProps {
 }
 
 export const RoomSelect: React.FC<RoomSelectProps> = ({ playerName, onJoinRoom, connecting, onBack }) => {
+  const { t, interpolate } = useTranslation();
   const [view, setView] = useState<'main' | 'create' | 'joinCode'>('main');
   const [codeInput, setCodeInput] = useState('');
   const [publicRooms, setPublicRooms] = useState<PublicRoom[]>([]);
@@ -63,7 +65,7 @@ export const RoomSelect: React.FC<RoomSelectProps> = ({ playerName, onJoinRoom, 
   const handleJoinByCode = () => {
     const code = codeInput.trim().toUpperCase();
     if (code.length < 4) {
-      setCodeError('Código muito curto');
+      setCodeError(t.roomSelect.codeTooShort);
       return;
     }
     setCodeError('');
@@ -83,9 +85,7 @@ export const RoomSelect: React.FC<RoomSelectProps> = ({ playerName, onJoinRoom, 
       <div className="room-select-card">
         <div className="room-select-header">
           <h1>Canastra Online</h1>
-          <p className="room-select-greeting">
-            Olá, <strong>{playerName}</strong>! Escolha uma sala:
-          </p>
+          <p className="room-select-greeting">{interpolate(t.roomSelect.greeting, { playerName })}</p>
         </div>
 
         {/* ── Main view ── */}
@@ -93,7 +93,7 @@ export const RoomSelect: React.FC<RoomSelectProps> = ({ playerName, onJoinRoom, 
           <div className="room-select-main">
             <div className="room-actions">
               <button className="btn btn-primary btn-room-action" onClick={() => setView('create')} disabled={busy}>
-                🆕 Criar Sala
+                {t.roomSelect.createRoom}
               </button>
               <button
                 className="btn btn-secondary btn-room-action"
@@ -104,21 +104,21 @@ export const RoomSelect: React.FC<RoomSelectProps> = ({ playerName, onJoinRoom, 
                 }}
                 disabled={busy}
               >
-                🔑 Entrar com Código
+                {t.roomSelect.joinWithCode}
               </button>
             </div>
 
             <div className="public-rooms-section">
               <div className="public-rooms-header">
-                <h3>Salas Públicas</h3>
+                <h3>{t.roomSelect.publicRooms}</h3>
                 <button className="btn btn-ghost" onClick={fetchPublicRooms} disabled={loadingRooms || busy}>
-                  {loadingRooms ? '…' : '↻ Atualizar'}
+                  {loadingRooms ? '…' : t.roomSelect.refresh}
                 </button>
               </div>
               {loadingRooms ? (
-                <div className="rooms-placeholder">Carregando salas...</div>
+                <div className="rooms-placeholder">{t.roomSelect.loadingRooms}</div>
               ) : publicRooms.length === 0 ? (
-                <div className="rooms-placeholder">Nenhuma sala pública disponível</div>
+                <div className="rooms-placeholder">{t.roomSelect.noPublicRooms}</div>
               ) : (
                 <div className="rooms-list">
                   {publicRooms.map((room) => (
@@ -135,7 +135,7 @@ export const RoomSelect: React.FC<RoomSelectProps> = ({ playerName, onJoinRoom, 
             </div>
 
             <button className="btn btn-ghost room-back-btn" onClick={onBack}>
-              ← Voltar
+              {t.roomSelect.back}
             </button>
           </div>
         )}
@@ -143,19 +143,19 @@ export const RoomSelect: React.FC<RoomSelectProps> = ({ playerName, onJoinRoom, 
         {/* ── Create room ── */}
         {view === 'create' && !createdCode && (
           <div className="room-select-sub">
-            <h2>Criar Sala</h2>
-            <p className="room-select-hint">Escolha a visibilidade:</p>
+            <h2>{t.roomSelect.createTitle}</h2>
+            <p className="room-select-hint">{t.roomSelect.chooseVisibility}</p>
             <button className="btn btn-outline btn-room-action" onClick={() => handleCreate(false)} disabled={busy}>
-              <span className="btn-room-label">🔒 Privada</span>
-              <span className="btn-room-sub">Acessível apenas com código</span>
+              <span className="btn-room-label">{t.roomSelect.privateRoom}</span>
+              <span className="btn-room-sub">{t.roomSelect.privateRoomDesc}</span>
             </button>
             <button className="btn btn-outline btn-room-action" onClick={() => handleCreate(true)} disabled={busy}>
-              <span className="btn-room-label">🌐 Pública</span>
-              <span className="btn-room-sub">Aparece na lista de salas públicas</span>
+              <span className="btn-room-label">{t.roomSelect.publicRoom}</span>
+              <span className="btn-room-sub">{t.roomSelect.publicRoomDesc}</span>
             </button>
-            {creating && <p className="room-select-hint">Criando sala...</p>}
+            {creating && <p className="room-select-hint">{t.roomSelect.creating}</p>}
             <button className="btn btn-ghost room-back-btn" onClick={() => setView('main')} disabled={busy}>
-              ← Voltar
+              {t.roomSelect.back}
             </button>
           </div>
         )}
@@ -163,22 +163,22 @@ export const RoomSelect: React.FC<RoomSelectProps> = ({ playerName, onJoinRoom, 
         {/* ── Created room — waiting for others ── */}
         {view === 'create' && createdCode && (
           <div className="room-select-sub created-room">
-            <h2>✅ Sala Criada!</h2>
-            <p className="room-select-hint">Compartilhe este código com os outros jogadores:</p>
+            <h2>{t.roomSelect.roomCreated}</h2>
+            <p className="room-select-hint">{t.roomSelect.shareCode}</p>
             <div className="created-code-box">
               <code className="created-code">{createdCode}</code>
               <button className="btn btn-ghost" onClick={() => copyCode(createdCode)}>
-                {copied ? '✅ Copiado!' : '📋 Copiar'}
+                {copied ? t.roomSelect.copied : t.roomSelect.copy}
               </button>
             </div>
-            <p className="room-select-hint connecting-hint">{connecting ? '⏳ Aguardando na sala...' : '✅ Conectado!'}</p>
+            <p className="room-select-hint connecting-hint">{connecting ? t.roomSelect.waitingInRoom : t.roomSelect.connected}</p>
           </div>
         )}
 
         {/* ── Join by code ── */}
         {view === 'joinCode' && (
           <div className="room-select-sub">
-            <h2>Entrar com Código</h2>
+            <h2>{t.roomSelect.joinTitle}</h2>
             <div className="code-input-group">
               <input
                 type="text"
@@ -189,18 +189,18 @@ export const RoomSelect: React.FC<RoomSelectProps> = ({ playerName, onJoinRoom, 
                   setCodeError('');
                 }}
                 onKeyDown={(e) => e.key === 'Enter' && handleJoinByCode()}
-                placeholder="Ex: ABC123"
+                placeholder={t.roomSelect.codePlaceholder}
                 maxLength={8}
                 autoFocus
                 disabled={busy}
               />
               {codeError && <span className="code-error">{codeError}</span>}
               <button className="btn btn-primary" onClick={handleJoinByCode} disabled={busy || codeInput.trim().length < 4}>
-                {connecting ? '⏳ Conectando...' : 'Entrar'}
+                {connecting ? t.roomSelect.connecting : t.roomSelect.join}
               </button>
             </div>
             <button className="btn btn-ghost room-back-btn" onClick={() => setView('main')} disabled={busy}>
-              ← Voltar
+              {t.roomSelect.back}
             </button>
           </div>
         )}

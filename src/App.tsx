@@ -6,10 +6,13 @@ import { Lobby } from './components/Lobby';
 import { GameBoard } from './components/GameBoard';
 import { RoundEnd, GameOver } from './components/RoundEnd';
 import { RoomSelect } from './components/RoomSelect';
+import { LanguageSwitcher } from './components/LanguageSwitcher';
+import { useTranslation } from './i18n';
 
 type AppPhase = 'nameEntry' | 'roomSelect' | 'game';
 
 function App() {
+  const { t } = useTranslation();
   const [appPhase, setAppPhase] = useState<AppPhase>('nameEntry');
   const [nameInput, setNameInput] = useState('');
   const [nameError, setNameError] = useState('');
@@ -89,7 +92,7 @@ function App() {
   const handleJoin = () => {
     const name = nameInput.trim();
     if (name.length < 2 || name.length > 20) {
-      setNameError('Nome deve ter entre 2 e 20 caracteres');
+      setNameError(t.nameEntry.error);
       return;
     }
     setNameError('');
@@ -111,25 +114,26 @@ function App() {
   if (appPhase === 'nameEntry') {
     return (
       <div className="name-entry">
+        <LanguageSwitcher />
         <div className="name-entry-card">
           <h1>Canastra Online</h1>
-          <p>Jogo de cartas para 4 jogadores em 2 duplas</p>
+          <p>{t.nameEntry.subtitle}</p>
           <div className="name-form">
-            <label htmlFor="name-input">Seu nome:</label>
+            <label htmlFor="name-input">{t.nameEntry.label}</label>
             <input
               id="name-input"
               type="text"
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
-              placeholder="Digite seu nome..."
+              placeholder={t.nameEntry.placeholder}
               maxLength={20}
               disabled={connecting}
               autoFocus
             />
             {nameError && <span className="name-error">{nameError}</span>}
             <button className="btn btn-primary" onClick={handleJoin} disabled={nameInput.trim().length < 2}>
-              Próximo →
+              {t.nameEntry.next}
             </button>
           </div>
         </div>
@@ -140,6 +144,7 @@ function App() {
   if (appPhase === 'roomSelect') {
     return (
       <div className="app">
+        <LanguageSwitcher />
         {errorMsg && (
           <div className="global-error" onClick={() => setErrorMsg(null)}>
             ⚠️ {errorMsg}
@@ -160,7 +165,7 @@ function App() {
     );
   }
 
-  if (!gameState || !publicId) return <div className="loading">Carregando...</div>;
+  if (!gameState || !publicId) return <div className="loading">{t.loading}</div>;
 
   const handleNextRound = async () => {
     await fetch(`/api/rooms/${roomCode}/next-round`, { method: 'POST' });
@@ -168,6 +173,7 @@ function App() {
 
   return (
     <div className="app">
+      <LanguageSwitcher />
       {errorMsg && (
         <div className="global-error" onClick={() => setErrorMsg(null)}>
           ⚠️ {errorMsg}
@@ -195,8 +201,8 @@ function App() {
           {gameState.phase === 'paused' && (
             <div className="paused-overlay">
               <div className="paused-box">
-                <h2>⏸ Jogo Pausado</h2>
-                <p>Um jogador se desconectou. Aguardando reconexão...</p>
+                <h2>{t.paused.title}</h2>
+                <p>{t.paused.message}</p>
                 <div className="paused-players">
                   {gameState.players
                     .filter((p) => !p.connected)
@@ -207,7 +213,7 @@ function App() {
                     ))}
                 </div>
                 <p className="paused-hint">
-                  Código da sala: <code>{roomCode}</code>
+                  {t.paused.roomCode} <code>{roomCode}</code>
                 </p>
               </div>
             </div>

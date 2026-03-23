@@ -1,5 +1,6 @@
 import React from 'react';
 import type { GameState } from '../types';
+import { useTranslation } from '../i18n';
 
 interface RoundEndProps {
   gameState: GameState;
@@ -8,37 +9,38 @@ interface RoundEndProps {
 }
 
 export const RoundEnd: React.FC<RoundEndProps> = ({ gameState, onNextRound }) => {
+  const { t, interpolate } = useTranslation();
   const roundWinner = gameState.teams[0].roundScore > gameState.teams[1].roundScore ? 0 : 1;
 
   return (
     <div className="round-end">
-      <h2>Fim da Rodada {gameState.round}</h2>
+      <h2>{interpolate(t.roundEnd.title, { round: gameState.round })}</h2>
 
       <div className="round-scores">
-        {gameState.teams.map((t) => (
-          <div key={t.id} className={`round-team-score${t.id === roundWinner ? ' winner' : ''}`}>
+        {gameState.teams.map((team) => (
+          <div key={team.id} className={`round-team-score${team.id === roundWinner ? ' winner' : ''}`}>
             <h3>
-              {gameState.teamNames?.[t.id] ?? (t.id === 0 ? 'Time A' : 'Time B')} {t.id === roundWinner ? '🏆' : ''}
+              {gameState.teamNames?.[team.id] ?? (team.id === 0 ? t.roundEnd.defaultTeamA : t.roundEnd.defaultTeamB)} {team.id === roundWinner ? '🏆' : ''}
             </h3>
             <div className="round-score-detail">
-              <span>Pontos da rodada:</span>
-              <strong className={t.roundScore >= 0 ? 'positive' : 'negative'}>
-                {t.roundScore >= 0 ? '+' : ''}
-                {t.roundScore}
+              <span>{t.roundEnd.roundPoints}</span>
+              <strong className={team.roundScore >= 0 ? 'positive' : 'negative'}>
+                {team.roundScore >= 0 ? '+' : ''}
+                {team.roundScore}
               </strong>
             </div>
             <div className="round-score-detail">
-              <span>Placar total:</span>
-              <strong>{t.score}</strong>
+              <span>{t.roundEnd.totalScore}</span>
+              <strong>{team.score}</strong>
             </div>
-            {t.inHole && <span className="in-hole-badge">🕳 No Buraco</span>}
+            {team.inHole && <span className="in-hole-badge">{t.roundEnd.inHole}</span>}
           </div>
         ))}
       </div>
 
       {gameState.phase !== 'gameOver' && (
         <button className="btn btn-primary" onClick={onNextRound}>
-          ▶ Próxima Rodada
+          {t.roundEnd.nextRound}
         </button>
       )}
     </div>
@@ -46,31 +48,39 @@ export const RoundEnd: React.FC<RoundEndProps> = ({ gameState, onNextRound }) =>
 };
 
 export const GameOver: React.FC<{ gameState: GameState; myPublicId: string }> = ({ gameState, myPublicId }) => {
+  const { t, interpolate } = useTranslation();
   const me = gameState.players.find((p) => p.publicId === myPublicId);
   const won = me?.teamId === gameState.winner;
   const winnerTeam = gameState.winner !== undefined ? gameState.teams[gameState.winner] : null;
 
   return (
     <div className="game-over">
-      <div className="game-over-title">{won ? '🎉 Você Ganhou!' : '😞 Você Perdeu!'}</div>
-      <h2>Fim de Jogo!</h2>
+      <div className="game-over-title">{won ? t.roundEnd.gameWon : t.roundEnd.gameLost}</div>
+      <h2>{t.roundEnd.gameOver}</h2>
       <p>
-        {gameState.winner !== undefined ? (gameState.teamNames?.[gameState.winner] ?? (gameState.winner === 0 ? 'Time A' : 'Time B')) : ''} venceu com {winnerTeam?.score} pontos!
+        {gameState.winner !== undefined
+          ? interpolate(t.roundEnd.winnerMsg, {
+              team: gameState.teamNames?.[gameState.winner] ?? (gameState.winner === 0 ? t.roundEnd.defaultTeamA : t.roundEnd.defaultTeamB),
+              score: winnerTeam?.score ?? 0,
+            })
+          : ''}
       </p>
 
       <div className="final-scores">
-        {gameState.teams.map((t) => (
-          <div key={t.id} className={`final-team${t.id === gameState.winner ? ' winner' : ''}`}>
+        {gameState.teams.map((team) => (
+          <div key={team.id} className={`final-team${team.id === gameState.winner ? ' winner' : ''}`}>
             <h3>
-              {gameState.teamNames?.[t.id] ?? (t.id === 0 ? 'Time A' : 'Time B')} {t.id === gameState.winner ? '🏆' : ''}
+              {gameState.teamNames?.[team.id] ?? (team.id === 0 ? t.roundEnd.defaultTeamA : t.roundEnd.defaultTeamB)} {team.id === gameState.winner ? '🏆' : ''}
             </h3>
-            <strong>{t.score} pts</strong>
+            <strong>
+              {team.score} {t.roundEnd.pts}
+            </strong>
           </div>
         ))}
       </div>
 
       <button className="btn btn-primary" onClick={() => window.location.reload()}>
-        🔄 Novo Jogo
+        {t.roundEnd.newGame}
       </button>
     </div>
   );
