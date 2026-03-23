@@ -42,6 +42,14 @@ function App() {
   const [pauseCountdown, setPauseCountdown] = useState<string | null>(null);
 
   const errorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const skipWelcomeUntilRef = useRef<number>(0);
+  const pendingWelcomeApplyRef = useRef<(() => void) | null>(null);
+  const welcomeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Tracks the freshest gameState/hand received while the welcome is still buffered
+  const latestGameStateRef = useRef<GameState | null>(null);
+  const latestHandRef = useRef<Card[]>([]);
+  const pendingPlayerIdRef = useRef<string | null>(null);
+  const pendingPublicIdRef = useRef<string | null>(null);
 
   // Scale the page so viewports wider than 2560px (4K at 100% OS scaling, etc.)
   // look like a 1440p (2560px-wide) display.
@@ -69,13 +77,35 @@ function App() {
   useEffect(() => {
     const unsub = socket.on((msg: ServerMessage) => {
       if (msg.type === 'welcome') {
-        setPlayerId(msg.playerId);
-        setPublicId(msg.publicId);
-        setGameState(msg.gameState);
-        setHand(msg.hand);
-        setAppPhase('game');
-        setConnecting(false);
+        // Always keep the latest snapshot so live updates during countdown are not lost
+        latestGameStateRef.current = msg.gameState;
+        latestHandRef.current = msg.hand;
+        pendingPlayerIdRef.current = msg.playerId;
+        pendingPublicIdRef.current = msg.publicId;
+        const applyWelcome = () => {
+          setPlayerId(pendingPlayerIdRef.current);
+          setPublicId(pendingPublicIdRef.current);
+          setGameState(latestGameStateRef.current);
+          setHand(latestHandRef.current);
+          setAppPhase('game');
+          setConnecting(false);
+        };
+        const remaining = skipWelcomeUntilRef.current - Date.now();
+        if (remaining > 100) {
+          pendingWelcomeApplyRef.current = applyWelcome;
+          welcomeTimerRef.current = setTimeout(() => {
+            if (pendingWelcomeApplyRef.current === applyWelcome) {
+              pendingWelcomeApplyRef.current = null;
+            }
+            applyWelcome();
+          }, remaining);
+        } else {
+          applyWelcome();
+        }
       } else if (msg.type === 'gameState') {
+        // Always update the live refs so the buffered welcome uses the latest state
+        latestGameStateRef.current = msg.gameState;
+        latestHandRef.current = msg.hand;
         setGameState(msg.gameState);
         setHand(msg.hand);
         // Log round summary to browser console when a round ends
@@ -163,6 +193,29 @@ function App() {
     [playerName],
   );
 
+  // Called immediately when the creator creates a room — connects socket but delays lobby display
+  const handleCreateRoom = useCallback(
+    (code: string) => {
+      if (welcomeTimerRef.current) clearTimeout(welcomeTimerRef.current);
+      skipWelcomeUntilRef.current = Date.now() + 5500;
+      setRoomCode(code);
+      setConnecting(true);
+      socket.connect(code, playerName);
+    },
+    [playerName],
+  );
+
+  // Called when the countdown ends or the creator clicks "Join Now"
+  const handleJoinNow = useCallback(() => {
+    if (welcomeTimerRef.current) {
+      clearTimeout(welcomeTimerRef.current);
+      welcomeTimerRef.current = null;
+    }
+    const apply = pendingWelcomeApplyRef.current;
+    pendingWelcomeApplyRef.current = null;
+    apply?.();
+  }, []);
+
   const send = useCallback((msg: ClientMessage) => socket.send(msg), []);
 
   const handleNextRound = useCallback(() => {
@@ -218,8 +271,14 @@ function App() {
         <RoomSelect
           playerName={playerName}
           onJoinRoom={handleJoinRoom}
+          onConnectRoom={handleCreateRoom}
+          onJoinNow={handleJoinNow}
           connecting={connecting}
           onBack={() => {
+            if (welcomeTimerRef.current) clearTimeout(welcomeTimerRef.current);
+            welcomeTimerRef.current = null;
+            pendingWelcomeApplyRef.current = null;
+            skipWelcomeUntilRef.current = 0;
             setAppPhase('nameEntry');
             setConnecting(false);
             socket.clearSession();
@@ -254,6 +313,7 @@ function App() {
           onKickPlayer={(targetPublicId) => send({ type: 'kickPlayer', targetPublicId })}
           onRenameTeam={(teamId, name) => send({ type: 'renameTeam', teamId, name })}
           onSwapTeamOrder={(publicIdA, publicIdB) => send({ type: 'swapTeamOrder', publicIdA, publicIdB })}
+          onForceStart={() => send({ type: 'forceStart' })}
         />
       )}
 

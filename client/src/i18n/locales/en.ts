@@ -57,6 +57,7 @@ export interface Translations {
     kickPlayer: string;
     defaultTeamA: string;
     defaultTeamB: string;
+    forceStart: string;
   };
   paused: {
     title: string;
@@ -200,6 +201,8 @@ export interface Translations {
     needCanastaToGoOut: string;
     mustPlayAllCards: string;
     firstLayDownMinScore: string;
+    leaderOnlyForceStart: string;
+    cannotForceStart: string;
     // Room dissolution / kick
     leaderLeft: string;
     reconnectTimeout: string;
@@ -275,6 +278,7 @@ export const en: Translations = {
     kickPlayer: 'Remove player',
     defaultTeamA: 'Team A',
     defaultTeamB: 'Team B',
+    forceStart: '⚡ Force Start (1v1)',
   },
 
   // Paused overlay
@@ -429,6 +433,8 @@ export const en: Translations = {
     needCanastaToGoOut: 'Your team needs at least one canasta to go out',
     mustPlayAllCards: 'Must play all cards to go out (or discard the last one)',
     firstLayDownMinScore: "First lay-down in 'Buraco' must score at least 100 points",
+    leaderOnlyForceStart: 'Only the leader can force start the game',
+    cannotForceStart: 'Force start requires 1 player per team with the other player ready',
     leaderLeft: 'The leader left the room. The room has been closed.',
     reconnectTimeout: 'A player did not reconnect in time. The match has been cancelled.',
     kickedByLeader: 'You were removed by the room leader.',

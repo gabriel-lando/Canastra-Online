@@ -88,6 +88,7 @@ export type ClientMessage =
   | { type: 'kickPlayer'; targetPublicId: string } // leader only
   | { type: 'renameTeam'; teamId: 0 | 1; name: string } // leader only
   | { type: 'swapTeamOrder'; publicIdA: string; publicIdB: string } // leader only
+  | { type: 'forceStart' } // leader only – start with 2 players (1 per team)
   | { type: 'drawFromStock' }
   | { type: 'takeDiscard' }
   | { type: 'layDown'; cardIds: string[]; meldType?: MeldType; targetMeldId?: string }

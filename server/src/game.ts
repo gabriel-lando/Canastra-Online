@@ -192,6 +192,26 @@ export class Game {
     return team0 === 2 && team1 === 2;
   }
 
+  /** Leader can force-start a 1v1 match when there is exactly 1 player per team and the non-leader is ready. */
+  canForceStart(leaderPublicId: string): boolean {
+    if (this.state.public.phase !== 'lobby') return false;
+    if (this.state.players.length !== 2) return false;
+    const team0 = this.state.players.filter((p) => p.teamId === 0).length;
+    const team1 = this.state.players.filter((p) => p.teamId === 1).length;
+    if (team0 !== 1 || team1 !== 1) return false;
+    const nonLeader = this.state.players.find((p) => p.publicId !== leaderPublicId);
+    return !!nonLeader && nonLeader.status === 'ready';
+  }
+
+  /** Force-start a 1v1 match. Marks all players ready and starts the round. */
+  forceStart(): void {
+    for (const p of this.state.players) {
+      p.status = 'ready';
+      this.updateSyncedPlayer(p);
+    }
+    this.startRound();
+  }
+
   startRound() {
     const gs = this.state.public;
     gs.phase = 'playing';
@@ -232,11 +252,11 @@ export class Game {
     // the player with the lower seatIndex is "player 1" of that team.
     const teamA = this.state.players.filter((p) => p.teamId === 0).sort((a, b) => a.seatIndex - b.seatIndex);
     const teamB = this.state.players.filter((p) => p.teamId === 1).sort((a, b) => a.seatIndex - b.seatIndex);
-    // Fixed seats: A1=0, B1=1, A2=2, B2=3
+    // Fixed seats: A1=0, B1=1, A2=2, B2=3 (2-player: only seat 0 and 1 are used)
     teamA[0].seatIndex = 0;
     teamB[0].seatIndex = 1;
-    teamA[1].seatIndex = 2;
-    teamB[1].seatIndex = 3;
+    if (teamA[1]) teamA[1].seatIndex = 2;
+    if (teamB[1]) teamB[1].seatIndex = 3;
     // Sync to public player list
     for (const p of this.state.players) {
       const pub = gs.players.find((x: Player) => x.id === p.id);
@@ -247,9 +267,8 @@ export class Game {
     this.state.players.sort((a, b) => a.seatIndex - b.seatIndex);
     gs.players.sort((a: Player, b: Player) => a.seatIndex - b.seatIndex);
 
-    // Rotate starting player each round:
-    // Round 1 → seat 0 (A1), Round 2 → seat 1 (B1), Round 3 → seat 2 (A2), Round 4 → seat 3 (B2), repeat.
-    gs.currentPlayerIndex = (gs.round - 1) % 4;
+    // Rotate starting player each round (works for both 2 and 4 players).
+    gs.currentPlayerIndex = (gs.round - 1) % this.state.players.length;
     gs.turnPhase = 'mustDraw';
     gs.lastAction = { key: 'action.roundStarted' };
   }
@@ -261,7 +280,7 @@ export class Game {
 
   private advanceTurn() {
     const gs = this.state.public;
-    gs.currentPlayerIndex = (gs.currentPlayerIndex + 1) % 4;
+    gs.currentPlayerIndex = (gs.currentPlayerIndex + 1) % this.state.players.length;
     gs.turnPhase = 'mustDraw';
     gs.takenSingleDiscardCardId = undefined;
   }

@@ -10,11 +10,13 @@ interface PublicRoom {
 interface RoomSelectProps {
   playerName: string;
   onJoinRoom: (code: string) => void;
+  onConnectRoom: (code: string) => void;
+  onJoinNow?: () => void;
   connecting: boolean;
   onBack: () => void;
 }
 
-export const RoomSelect: React.FC<RoomSelectProps> = ({ playerName, onJoinRoom, connecting, onBack }) => {
+export const RoomSelect: React.FC<RoomSelectProps> = ({ playerName, onJoinRoom, onConnectRoom, onJoinNow, connecting, onBack }) => {
   const { t, interpolate } = useTranslation();
   const [view, setView] = useState<'main' | 'create' | 'joinCode'>('main');
   const [codeInput, setCodeInput] = useState('');
@@ -47,13 +49,13 @@ export const RoomSelect: React.FC<RoomSelectProps> = ({ playerName, onJoinRoom, 
   useEffect(() => {
     if (countdown === null || pendingJoinCode === null) return;
     if (countdown <= 0) {
-      onJoinRoom(pendingJoinCode);
       setCountdown(null);
+      onJoinNow?.(); // countdown naturally expired — apply buffered welcome
       return;
     }
     const id = setTimeout(() => setCountdown((c) => (c !== null ? c - 1 : null)), 1000);
     return () => clearTimeout(id);
-  }, [countdown, pendingJoinCode, onJoinRoom]);
+  }, [countdown, pendingJoinCode, onJoinNow]);
 
   const handleCreate = async (isPublic: boolean) => {
     setCreating(true);
@@ -68,6 +70,8 @@ export const RoomSelect: React.FC<RoomSelectProps> = ({ playerName, onJoinRoom, 
         setCreatedCode(data.code);
         setPendingJoinCode(data.code);
         setCountdown(5);
+        // Connect immediately so the creator is always first (room leader), but delay lobby display
+        onConnectRoom(data.code);
       }
     } catch {
       // error propagates via socket error message
@@ -191,7 +195,8 @@ export const RoomSelect: React.FC<RoomSelectProps> = ({ playerName, onJoinRoom, 
                 <button
                   className="btn btn-primary btn-room-action"
                   onClick={() => {
-                    setCountdown(0);
+                    setCountdown(null);
+                    onJoinNow?.();
                   }}
                 >
                   {t.roomSelect.joinNow}

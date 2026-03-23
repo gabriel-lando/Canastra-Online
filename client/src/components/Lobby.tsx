@@ -22,9 +22,10 @@ interface LobbyProps {
   onKickPlayer: (targetPublicId: string) => void;
   onRenameTeam: (teamId: 0 | 1, name: string) => void;
   onSwapTeamOrder: (publicIdA: string, publicIdB: string) => void;
+  onForceStart: () => void;
 }
 
-export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, onReady, onUnready, onSelectTeam, onMovePlayer, onKickPlayer, onRenameTeam, onSwapTeamOrder }) => {
+export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, onReady, onUnready, onSelectTeam, onMovePlayer, onKickPlayer, onRenameTeam, onSwapTeamOrder, onForceStart }) => {
   const { t, interpolate } = useTranslation();
   const isTouchDevice = useIsTouchDevice();
   const me = gameState.players.find((p) => p.publicId === myPublicId);
@@ -37,6 +38,10 @@ export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, o
 
   const readyCount = gameState.players.filter((p) => p.status === 'ready').length;
   const canStart = readyCount === 4 && team0.length === 2 && team1.length === 2;
+
+  // Force-start (1v1): leader can start when there are exactly 2 players (1 per team) and the non-leader is ready
+  const nonLeader = gameState.players.find((p) => p.publicId !== myPublicId);
+  const canForceStart = isLeader && gameState.players.length === 2 && team0.length === 1 && team1.length === 1 && nonLeader?.status === 'ready';
 
   const [dragOverTeam, setDragOverTeam] = useState<0 | 1 | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<{ publicId: string; teamId: 0 | 1 } | null>(null);
@@ -204,6 +209,11 @@ export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, o
         ) : (
           <button className="btn btn-secondary" onClick={onUnready}>
             {t.lobby.cancelReady}
+          </button>
+        )}
+        {canForceStart && (
+          <button className="btn btn-success force-start-btn" onClick={onForceStart}>
+            {t.lobby.forceStart}
           </button>
         )}
       </div>

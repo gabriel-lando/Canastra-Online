@@ -83,6 +83,7 @@ export type ClientMessage =
   | { type: 'kickPlayer'; targetPublicId: string }
   | { type: 'renameTeam'; teamId: 0 | 1; name: string }
   | { type: 'swapTeamOrder'; publicIdA: string; publicIdB: string }
+  | { type: 'forceStart' }
   | { type: 'drawFromStock' }
   | { type: 'takeDiscard' }
   | { type: 'layDown'; cardIds: string[]; meldType?: MeldType; targetMeldId?: string }

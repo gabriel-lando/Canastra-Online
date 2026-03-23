@@ -388,6 +388,25 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
         break;
       }
 
+      case 'forceStart': {
+        if (!isLeader) {
+          send(ws, { type: 'error', message: 'errors.leaderOnlyForceStart' });
+          return;
+        }
+        if (!room.game.canForceStart(myPublicId)) {
+          send(ws, { type: 'error', message: 'errors.cannotForceStart' });
+          return;
+        }
+        room.game.forceStart();
+        // Update reconnect token teamIds after teams are locked in
+        for (const [, entry] of room.reconnectTokens) {
+          const p = room.game.getPlayerState(entry.playerId);
+          if (p) entry.teamId = p.teamId;
+        }
+        broadcastRoom();
+        break;
+      }
+
       case 'drawFromStock': {
         const r = room.game.drawFromStock(playerId);
         if (!r.success) {

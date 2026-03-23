@@ -67,6 +67,7 @@ export const ptBR: Translations = {
     kickPlayer: 'Remover jogador',
     defaultTeamA: 'Time A',
     defaultTeamB: 'Time B',
+    forceStart: '⚡ Forçar Início (1v1)',
   },
 
   // Paused overlay
@@ -221,6 +222,8 @@ export const ptBR: Translations = {
     needCanastaToGoOut: 'Seu time precisa de pelo menos uma canastra para sair',
     mustPlayAllCards: 'Você precisa jogar todas as cartas para sair (ou descartar a última)',
     firstLayDownMinScore: 'A primeira baixa no Buraco deve somar pelo menos 100 pontos',
+    leaderOnlyForceStart: 'Apenas o líder pode forçar o início do jogo',
+    cannotForceStart: 'Forçar início requer 1 jogador por time com o outro jogador pronto',
     leaderLeft: 'O líder saiu da sala. A sala foi encerrada.',
     reconnectTimeout: 'Um jogador não reconectou a tempo. A partida foi cancelada.',
     kickedByLeader: 'Você foi removido pelo líder da sala.',
