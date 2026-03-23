@@ -94,6 +94,7 @@ export type ClientMessage =
   | { type: 'addToMeld'; meldId: string; cardIds: string[] }
   | { type: 'discard'; cardId: string }
   | { type: 'goOut'; discardCardId?: string } // bater
+  | { type: 'nextRound' } // leader only
   | { type: 'ping' };
 
 // Messages from server to client

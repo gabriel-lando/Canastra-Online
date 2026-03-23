@@ -1,5 +1,5 @@
-import React from 'react';
-import type { GameState } from '../types';
+import React, { useState } from 'react';
+import type { GameState, RoundSummary } from '../types';
 import { useTranslation } from '../i18n';
 
 interface RoundEndProps {
@@ -8,9 +8,77 @@ interface RoundEndProps {
   onNextRound: () => void;
 }
 
-export const RoundEnd: React.FC<RoundEndProps> = ({ gameState, onNextRound }) => {
+function cardLabel(card: string): string {
+  // Cards in roundSummary are formatted as rank + suit initial, e.g. "2H", "10C", "AS", "QD"
+  const suitEmojis: Record<string, string> = { H: '♥', D: '♦', C: '♣', S: '♠' };
+  const suit = card.slice(-1);
+  const rank = card.slice(0, -1);
+  return `${rank}${suitEmojis[suit] ?? suit}`;
+}
+
+interface SummaryDetailsProps {
+  summary: RoundSummary;
+}
+
+const SummaryDetails: React.FC<SummaryDetailsProps> = ({ summary }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="round-summary-details">
+      {summary.teams.map((team) => {
+        const teamWon = team.name === summary.winner;
+        return (
+          <div key={team.name} className="round-summary-team">
+            <h4 className="round-summary-team-name">{team.name}</h4>
+            {team.melds.length > 0 && (
+              <div className="round-summary-section">
+                <span className="round-summary-label">{t.roundEnd.melds}:</span>
+                <ul className="round-summary-list">
+                  {team.melds.map((meld, i) => (
+                    <li key={i} className="round-summary-meld">
+                      <span className="round-summary-meld-cards">{meld.cards.map(cardLabel).join(' ')}</span>
+                      <span className="round-summary-meld-pts">
+                        +{meld.points} {t.roundEnd.pts}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {team.players.map((player) => (
+              <div key={player.name} className="round-summary-player">
+                <span className="round-summary-player-name">{player.name}</span>
+                {player.hand.length > 0 ? (
+                  <span className="round-summary-player-hand">
+                    {player.hand.map(cardLabel).join(' ')} →{' '}
+                    <span className="negative">
+                      {player.handPenalty} {t.roundEnd.pts}
+                    </span>
+                  </span>
+                ) : (
+                  <span className="round-summary-player-went-out">
+                    {t.roundEnd.wentOut}
+                    {teamWon && (
+                      <span className="round-summary-meld-pts">
+                        {' '}
+                        (+50 {t.roundEnd.pts} {t.roundEnd.goOutBonus})
+                      </span>
+                    )}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+export const RoundEnd: React.FC<RoundEndProps> = ({ gameState, myPublicId, onNextRound }) => {
   const { t, interpolate } = useTranslation();
+  const [showDetails, setShowDetails] = useState(false);
   const roundWinner = gameState.teams[0].roundScore > gameState.teams[1].roundScore ? 0 : 1;
+  const isLeader = myPublicId === gameState.leaderId;
 
   return (
     <div className="round-end">
@@ -38,17 +106,30 @@ export const RoundEnd: React.FC<RoundEndProps> = ({ gameState, onNextRound }) =>
         ))}
       </div>
 
-      {gameState.phase !== 'gameOver' && (
-        <button className="btn btn-primary" onClick={onNextRound}>
-          {t.roundEnd.nextRound}
-        </button>
+      {gameState.roundSummary && (
+        <div className="round-summary-expander">
+          <button className="btn btn-secondary btn-sm round-summary-toggle" onClick={() => setShowDetails((v) => !v)}>
+            {showDetails ? t.roundEnd.hideDetails : t.roundEnd.showDetails}
+          </button>
+          {showDetails && <SummaryDetails summary={gameState.roundSummary} />}
+        </div>
       )}
+
+      {gameState.phase !== 'gameOver' &&
+        (isLeader ? (
+          <button className="btn btn-primary" onClick={onNextRound}>
+            {t.roundEnd.nextRound}
+          </button>
+        ) : (
+          <p className="round-waiting-message">{t.roundEnd.waitingForLeader}</p>
+        ))}
     </div>
   );
 };
 
 export const GameOver: React.FC<{ gameState: GameState; myPublicId: string }> = ({ gameState, myPublicId }) => {
   const { t, interpolate } = useTranslation();
+  const [showDetails, setShowDetails] = useState(false);
   const me = gameState.players.find((p) => p.publicId === myPublicId);
   const won = me?.teamId === gameState.winner;
   const winnerTeam = gameState.winner !== undefined ? gameState.teams[gameState.winner] : null;
@@ -78,6 +159,15 @@ export const GameOver: React.FC<{ gameState: GameState; myPublicId: string }> = 
           </div>
         ))}
       </div>
+
+      {gameState.roundSummary && (
+        <div className="round-summary-expander">
+          <button className="btn btn-secondary btn-sm round-summary-toggle" onClick={() => setShowDetails((v) => !v)}>
+            {showDetails ? t.roundEnd.hideDetails : t.roundEnd.showDetails}
+          </button>
+          {showDetails && <SummaryDetails summary={gameState.roundSummary} />}
+        </div>
+      )}
 
       <button className="btn btn-primary" onClick={() => window.location.reload()}>
         {t.roundEnd.newGame}

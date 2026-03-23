@@ -16,10 +16,9 @@ interface GameBoardProps {
   onAddToMeld: (meldId: string, cardIds: string[]) => void;
   onDiscard: (cardId: string) => void;
   onGoOut: (discardCardId?: string) => void;
-  errorMsg: string | null;
 }
 
-export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicId, onDrawFromStock, onTakeDiscard, onLayDown, onAddToMeld, onDiscard, onGoOut: _onGoOut, errorMsg }) => {
+export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicId, onDrawFromStock, onTakeDiscard, onLayDown, onAddToMeld, onDiscard, onGoOut: _onGoOut }) => {
   const { t, interpolate } = useTranslation();
   const [selectedCardIds, setSelectedCardIds] = useState<Set<string>>(new Set());
   const [discardExpanded, setDiscardExpanded] = useState(false);
@@ -174,8 +173,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicI
           <span className="turn-phase">{gameState.turnPhase === 'mustDraw' ? t.game.phaseMustDraw : gameState.turnPhase === 'canAct' ? t.game.phaseCanAct : t.game.phaseMustDiscard}</span>
         </div>
       </div>
-
-      {errorMsg && <div className="error-banner">{errorMsg}</div>}
 
       {gameState.lastAction && <div className="last-action">{gameState.lastAction}</div>}
 

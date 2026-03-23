@@ -89,6 +89,7 @@ export type ClientMessage =
   | { type: 'addToMeld'; meldId: string; cardIds: string[] }
   | { type: 'discard'; cardId: string }
   | { type: 'goOut'; discardCardId?: string }
+  | { type: 'nextRound' } // leader only
   | { type: 'ping' };
 
 export type ServerMessage =

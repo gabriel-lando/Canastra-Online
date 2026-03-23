@@ -111,6 +111,12 @@ export interface Translations {
     totalScore: string;
     inHole: string;
     nextRound: string;
+    waitingForLeader: string;
+    showDetails: string;
+    hideDetails: string;
+    melds: string;
+    wentOut: string;
+    goOutBonus: string;
     gameWon: string;
     gameLost: string;
     gameOver: string;
@@ -149,6 +155,8 @@ export interface Translations {
     leaderOnlyKick: string;
     leaderOnlyRename: string;
     leaderOnlyReorder: string;
+    leaderOnlyNextRound: string;
+    notInRoundEnd: string;
     // Player management
     playerNotFound: string;
     // Game / lobby state
@@ -310,6 +318,12 @@ export const en: Translations = {
     totalScore: 'Total score:',
     inHole: '🕳 In the Hole',
     nextRound: '▶ Next Round',
+    waitingForLeader: '⏳ Waiting for the leader to start the next round...',
+    showDetails: '📊 Show Details',
+    hideDetails: '▲ Hide Details',
+    melds: 'Melds',
+    wentOut: 'went out (no cards)',
+    goOutBonus: 'going out bonus',
     gameWon: '🎉 You Won!',
     gameLost: '😞 You Lost!',
     gameOver: 'Game Over!',
@@ -352,6 +366,8 @@ export const en: Translations = {
     leaderOnlyKick: 'Only the leader can kick players',
     leaderOnlyRename: 'Only the leader can rename teams',
     leaderOnlyReorder: 'Only the leader can reorder players',
+    leaderOnlyNextRound: 'Only the leader can start the next round',
+    notInRoundEnd: 'This action is only available at round end',
     playerNotFound: 'Player not found',
     gameAlreadyStarted: 'Game has already started',
     gameFull: 'The room is full',

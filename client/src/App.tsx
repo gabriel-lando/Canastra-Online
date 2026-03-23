@@ -149,6 +149,10 @@ function App() {
 
   const send = useCallback((msg: ClientMessage) => socket.send(msg), []);
 
+  const handleNextRound = useCallback(() => {
+    send({ type: 'nextRound' });
+  }, [send]);
+
   if (appPhase === 'nameEntry') {
     return (
       <div className="name-entry">
@@ -212,10 +216,6 @@ function App() {
 
   if (!gameState || !publicId) return <div className="loading">{t.loading}</div>;
 
-  const handleNextRound = async () => {
-    await fetch(`/api/rooms/${roomCode}/next-round`, { method: 'POST' });
-  };
-
   return (
     <div className={`app${gameState.phase === 'lobby' ? ' is-lobby' : ''}`}>
       <LanguageSwitcher />
@@ -275,7 +275,6 @@ function App() {
             onAddToMeld={(meldId, cardIds) => send({ type: 'addToMeld', meldId, cardIds })}
             onDiscard={(cardId) => send({ type: 'discard', cardId })}
             onGoOut={(discardCardId) => send({ type: 'goOut', discardCardId })}
-            errorMsg={errorMsg}
           />
         </>
       )}

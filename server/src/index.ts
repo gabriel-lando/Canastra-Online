@@ -448,6 +448,25 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
         break;
       }
 
+      case 'nextRound': {
+        if (!isLeader) {
+          send(ws, { type: 'error', message: 'errors.leaderOnlyNextRound' });
+          return;
+        }
+        if (room.game.getPublicState().phase !== 'roundEnd') {
+          send(ws, { type: 'error', message: 'errors.notInRoundEnd' });
+          return;
+        }
+        room.game.startNextRound();
+        // Update reconnect token teamIds after teams are locked in
+        for (const [, entry] of room.reconnectTokens) {
+          const p = room.game.getPlayerState(entry.playerId);
+          if (p) entry.teamId = p.teamId;
+        }
+        broadcastRoom();
+        break;
+      }
+
       default:
         send(ws, { type: 'error', message: 'errors.unknownMessageType' });
     }
