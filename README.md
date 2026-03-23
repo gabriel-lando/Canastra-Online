@@ -6,27 +6,30 @@ Jogo de cartas online em tempo real, baseado nas regras de Buraco/Canastra. Para
 
 1. Acesse a URL do servidor.
 2. Digite seu nome e clique **Entrar no Jogo**.
-3. No lobby, escolha seu time (Time A ou Time B) e clique **Pronto**.
-4. Quando todos os 4 jogadores estiverem prontos e os times estiverem balanceados (2x2), o jogo inicia automaticamente.
+3. Crie uma sala ou entre em uma sala pública/por código.
+4. No lobby, escolha seu time e clique **Pronto**. O líder pode renomear os times, reordenar jogadores e remover membros.
+5. Quando todos os 4 jogadores estiverem prontos com os times balanceados (2×2), o jogo inicia automaticamente.
 
 ## Tecnologias
 
-- **Backend**: Node.js + Express + WebSocket (ws)
-- **Frontend**: React + Vite + TypeScript
-- **Deploy**: Docker + docker-compose
+- **Backend**: Node.js 22 + Express + WebSocket (`ws`) + TypeScript
+- **Frontend**: React 19 + Vite + TypeScript
+- **i18n**: Português (BR) e Inglês, com troca em tempo real
+- **Deploy**: Docker + docker-compose (build multi-stage)
 
 ## Desenvolvimento local
 
 ### Requisitos
+
 - Node.js 22+
 
 ### Rodando localmente
 
 ```bash
-# 1. Instalar dependencias do frontend
+# 1. Instalar dependências do frontend
 npm install
 
-# 2. Instalar dependencias do backend
+# 2. Instalar dependências do backend
 cd server && npm install && cd ..
 
 # 3. Build do frontend
@@ -46,10 +49,10 @@ Acesse: http://localhost:3000
 Em dois terminais:
 
 ```bash
-# Terminal 1 - backend em watch mode
+# Terminal 1 - backend em watch mode (tsx watch)
 cd server && npm run dev
 
-# Terminal 2 - frontend com vite dev server (proxy para /api -> localhost:3000)
+# Terminal 2 - frontend com vite dev server (proxy /api → localhost:3000)
 npm run dev
 ```
 
@@ -68,7 +71,7 @@ docker compose up -d --build
 docker compose down
 ```
 
-O servidor roda na porta **3000**. Para usar com um domínio (ex: canastra.example.com), configure um reverse proxy (nginx, Caddy, Traefik) apontando para `localhost:3000`.
+O servidor roda na porta **3000** (configurável via variável de ambiente `PORT`). Para usar com um domínio, configure um reverse proxy (nginx, Caddy, Traefik) apontando para `localhost:3000`.
 
 ### Exemplo de configuração nginx para subdomínio
 
@@ -91,51 +94,81 @@ server {
 ## Arquitetura
 
 ```
+Browser ──── WebSocket /api/ws?room=CÓDIGO ───┐
+       ──── REST /api/rooms               ────┴── Express (porta 3000)
+                                               └── static /dist (build Vite)
+```
+
+```
 /
-├── src/                    # Frontend React
-│   ├── App.tsx             # Componente principal + roteamento de fase
-│   ├── socket.ts           # Cliente WebSocket
-│   ├── types.ts            # Tipos compartilhados
-│   ├── App.css             # Estilos
+├── src/                        # Frontend React
+│   ├── App.tsx                 # Componente raiz + máquina de estados (nameEntry → roomSelect → game)
+│   ├── socket.ts               # Cliente WebSocket
+│   ├── types.ts                # Tipos compartilhados
+│   ├── App.css                 # Estilos globais
+│   ├── i18n/                   # Internacionalização (pt-BR padrão, en disponível)
 │   └── components/
-│       ├── CardView.tsx    # Componente de carta
-│       ├── MeldView.tsx    # Componente de joguinho/canastra
-│       ├── Lobby.tsx       # Tela de lobby
-│       ├── GameBoard.tsx   # Mesa de jogo
-│       └── RoundEnd.tsx    # Fim de rodada / fim de jogo
+│       ├── RoomSelect.tsx      # Criar / listar salas públicas / entrar por código
+│       ├── Lobby.tsx           # Lobby pré-jogo com drag-and-drop de times
+│       ├── GameBoard.tsx       # Mesa de jogo principal
+│       ├── CardView.tsx        # Componente de carta individual
+│       ├── MeldView.tsx        # Componente de joguinho/canastra
+│       ├── RoundEnd.tsx        # Placar de fim de rodada e fim de jogo
+│       └── LanguageSwitcher.tsx# Alternância de idioma (🇧🇷 / 🇺🇸)
 ├── server/
 │   └── src/
-│       ├── index.ts        # Express + WebSocket server
-│       ├── game.ts         # Lógica do jogo
-│       ├── cards.ts        # Baralho, validacoes, pontuacao
-│       └── types.ts        # Tipos do servidor
-├── Dockerfile
+│       ├── index.ts            # Express + WebSocket server + REST API
+│       ├── game.ts             # Lógica completa do jogo
+│       ├── cards.ts            # Baralho, validações, pontuação
+│       └── types.ts            # Tipos do servidor
+├── Dockerfile                  # Build multi-stage (frontend-builder → backend-builder → production)
 ├── docker-compose.yml
 └── .dockerignore
 ```
 
 ## Segurança
 
-- O UUID privado do jogador só é enviado para ele no momento do `welcome`.
-- Outros jogadores veem apenas o `publicId` (8 chars) e o nome.
+- O UUID privado do jogador (`playerId`) é enviado apenas a ele no momento do `welcome`.
+- Outros jogadores veem somente o `publicId` (8 chars) e o nome.
 - Toda ação do jogo é validada no servidor; o frontend não pode trapacear.
-- O jogador só recebe suas próprias cartas; as cartas de outros jogadores nunca são enviadas.
+- O jogador recebe apenas suas próprias cartas; a mão dos adversários nunca é transmitida.
+- Nomes são sanitizados no servidor (remoção de `<>&"'` para prevenção de XSS).
 
 ## Regras implementadas
 
-- ✅ 2 baralhos sem joker (104 cartas)
-- ✅ 4 jogadores, 2 duplas, turnos alternados
-- ✅ 11 cartas por jogador
-- ✅ Coringas (2s) não podem ser maioria
-- ✅ Exceção: grupos de 2s e sequências que passam pelo rank 2 são naturais
-- ✅ Pontuação: A=15, 7-K=10, 3-6=5, 2=10
-- ✅ Comprar do monte ou pegar o lixo
+### Configuração
+
+- ✅ 2 baralhos sem coringa (104 cartas) — **2s são coringas**
+- ✅ 4 jogadores, 2 duplas, assentos intercalados (A1→B1→A2→B2)
+- ✅ 13 cartas por jogador
+
+### Turno
+
+- ✅ Comprar do monte ou pegar o lixo inteiro
 - ✅ Regra especial: 1 carta na mão + 1 no lixo → obrigatório comprar do monte
-- ✅ Grupos (mesmo rank) e sequências (mesmo naipe, consecutivas)
-- ✅ Canastras (7+ cartas): limpa=+200, suja=+100
-- ✅ Primeira baixa fora do buraco: sem restrição de pontos
-- ✅ Primeira baixa no buraco (≥1000 pts): mínimo 100 pontos
-- ✅ Adicionar cartas a joguinhos existentes
-- ✅ Bater: precisa de pelo menos 1 canastra, +50 bônus
-- ✅ Fim de rodada: cartas na mão = pontos negativos
-- ✅ Vitória: 2000 pontos
+- ✅ Baixar joguinhos e adicionar cartas a joguinhos existentes (opcional, repetível)
+- ✅ Descartar uma carta para encerrar o turno
+
+### Joguinhos
+
+- ✅ **Grupos**: mesmo rank, 3+ cartas; coringas não podem ser maioria
+- ✅ **Sequências**: mesmo naipe, consecutive, 3+ cartas; Ás pode ser baixo (A,2,3…) ou alto (…Q,K,A)
+- ✅ Grupos de 2s puros e sequências com 2 natural no naipe correto são considerados naturais
+- ✅ **Canastras** (7+ cartas): limpa (sem coringa) = +200 pts, suja (com coringa) = +100 pts
+
+### Pontuação
+
+- ✅ A = 15 pts · 7–K = 10 pts · 3–6 = 5 pts · 2 (coringa) = 10 pts
+- ✅ Cartas na mão ao fim da rodada = pontos negativos
+- ✅ Bater: precisa de pelo menos 1 canastra, bônus de +50 pts
+- ✅ Monte esgotado: último comprador descarta e a rodada termina (sem bônus de bater)
+- ✅ Primeira baixa **fora do buraco**: sem restrição de pontos
+- ✅ Primeira baixa **no buraco** (≥ 1.000 pts acumulados): mínimo de 100 pts na baixa
+- ✅ **Vitória**: primeiro time a atingir 2.000 pontos
+
+### Outras
+
+- ✅ Reconexão automática via token de sessão; jogo pausado enquanto jogador está offline
+- ✅ Salas públicas e privadas com código de 6 caracteres (alfanumérico sem ambiguidade)
+- ✅ Líder pode renomear times, mover e remover jogadores
+- ✅ Rotação do assento inicial a cada rodada
