@@ -3,7 +3,9 @@
 Jogo de cartas online em tempo real, baseado nas regras de Buraco/Canastra. Para 4 jogadores em 2 duplas.
 
 🌐 **Demo**: [canastra.gabriellando.com](https://canastra.gabriellando.com/)
+
 📦 **Docker Hub**: [gabriellando/canastra-online](https://hub.docker.com/r/gabriellando/canastra-online)
+
 💻 **Código-fonte**: [github.com/gabriel-lando/Canastra-Online](https://github.com/gabriel-lando/Canastra-Online)
 
 ---
