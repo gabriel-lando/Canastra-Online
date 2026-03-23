@@ -29,6 +29,8 @@ export interface Translations {
     copy: string;
     waitingInRoom: string;
     connected: string;
+    joiningIn: string;
+    joinNow: string;
     joinTitle: string;
     codePlaceholder: string;
     codeTooShort: string;
@@ -242,6 +244,9 @@ export const en: Translations = {
     copy: '📋 Copy',
     waitingInRoom: '⏳ Waiting in room...',
     connected: '✅ Connected!',
+    joiningIn: '⏱️ Joining in {seconds}s...',
+    joinNow: 'Join Now',
+
     joinTitle: 'Join with Code',
     codePlaceholder: 'e.g. ABC123',
     codeTooShort: 'Code is too short',

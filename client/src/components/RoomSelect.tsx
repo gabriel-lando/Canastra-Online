@@ -24,6 +24,8 @@ export const RoomSelect: React.FC<RoomSelectProps> = ({ playerName, onJoinRoom, 
   const [codeError, setCodeError] = useState('');
   const [copied, setCopied] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [pendingJoinCode, setPendingJoinCode] = useState<string | null>(null);
 
   const fetchPublicRooms = useCallback(async () => {
     setLoadingRooms(true);
@@ -42,6 +44,17 @@ export const RoomSelect: React.FC<RoomSelectProps> = ({ playerName, onJoinRoom, 
     fetchPublicRooms();
   }, [fetchPublicRooms]);
 
+  useEffect(() => {
+    if (countdown === null || pendingJoinCode === null) return;
+    if (countdown <= 0) {
+      onJoinRoom(pendingJoinCode);
+      setCountdown(null);
+      return;
+    }
+    const id = setTimeout(() => setCountdown((c) => (c !== null ? c - 1 : null)), 1000);
+    return () => clearTimeout(id);
+  }, [countdown, pendingJoinCode, onJoinRoom]);
+
   const handleCreate = async (isPublic: boolean) => {
     setCreating(true);
     try {
@@ -53,7 +66,8 @@ export const RoomSelect: React.FC<RoomSelectProps> = ({ playerName, onJoinRoom, 
       const data = (await res.json()) as { code?: string };
       if (data.code) {
         setCreatedCode(data.code);
-        onJoinRoom(data.code);
+        setPendingJoinCode(data.code);
+        setCountdown(5);
       }
     } catch {
       // error propagates via socket error message
@@ -171,7 +185,21 @@ export const RoomSelect: React.FC<RoomSelectProps> = ({ playerName, onJoinRoom, 
                 {copied ? t.roomSelect.copied : t.roomSelect.copy}
               </button>
             </div>
-            <p className="room-select-hint connecting-hint">{connecting ? t.roomSelect.waitingInRoom : t.roomSelect.connected}</p>
+            {countdown !== null ? (
+              <>
+                <p className="room-select-hint connecting-hint room-countdown">{interpolate(t.roomSelect.joiningIn, { seconds: String(countdown) })}</p>
+                <button
+                  className="btn btn-primary btn-room-action"
+                  onClick={() => {
+                    setCountdown(0);
+                  }}
+                >
+                  {t.roomSelect.joinNow}
+                </button>
+              </>
+            ) : (
+              <p className="room-select-hint connecting-hint">{connecting ? t.roomSelect.waitingInRoom : t.roomSelect.connected}</p>
+            )}
           </div>
         )}
 

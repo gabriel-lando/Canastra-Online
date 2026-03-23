@@ -36,6 +36,9 @@ export const ptBR: Translations = {
     copy: '📋 Copiar',
     waitingInRoom: '⏳ Aguardando na sala...',
     connected: '✅ Conectado!',
+    joiningIn: '⏱️ Entrando em {seconds}s...',
+    joinNow: 'Entrar Agora',
+
     joinTitle: 'Entrar com Código',
     codePlaceholder: 'Ex: ABC123',
     codeTooShort: 'Código muito curto',
