@@ -152,6 +152,15 @@ export const ptBR: Translations = {
   lang: {
     switchTo: 'Trocar idioma',
   },
+  teamSettings: {
+    editTooltip: 'Editar configurações do time',
+    viewTooltip: 'Visualizar configurações do time',
+    title: 'Configurações do Time',
+    initialScoreLabel: 'Pontuação inicial',
+    save: 'Salvar',
+    close: 'Fechar',
+    readOnlyInfo: 'Apenas o líder pode alterar esta configuração',
+  },
 
   // Log de ações do jogo
   action: {
@@ -161,6 +170,7 @@ export const ptBR: Translations = {
     tookDiscard: '{name} pegou o descarte ({count} cartas)',
     laidDownAndWentOut: '{name} baixou e saiu! Fim da rodada.',
     laidDown: '{name} baixou um(a) {type}',
+    laidDownMultiple: '{name} baixou {count} combinação(ões)',
     addedToMeldAndWentOut: '{name} adicionou e saiu! Fim da rodada.',
     addedToMeld: '{name} adicionou a um(a) {type}',
     discardedAndWentOut: '{name} descartou e saiu! Fim da rodada.',
@@ -169,6 +179,31 @@ export const ptBR: Translations = {
     wentOut: '{name} saiu! Fim da rodada.',
     meldGroup: 'grupo',
     meldSequence: 'sequência',
+  },
+
+  // Modal de primeira baixa (times no buraco)
+  firstLayDown: {
+    openBtn: '🃏 Planejar Primeira Baixa (≥100 pts)',
+    openBtnHint: 'Use o botão de planejar para preparar sua primeira baixa, ou descarte uma carta para encerrar sua vez.',
+    title: '🃏 Primeira Baixa',
+    subtitle: 'Seu time está no buraco! A primeira baixa deve somar pelo menos 100 pontos.',
+    total: 'Total: {pts} pts',
+    remaining: '{count} carta(s) restante(s) na mão',
+    stagedLabel: 'Combinações preparadas:',
+    noMelds: 'Selecione cartas da sua mão e clique em "Preparar" para adicionar combinações aqui.',
+    stageBtn: '+ Preparar como Combinação',
+    sortBtn: '⇅ Ordenar',
+    sortHand: 'Ordenar cartas',
+    confirmBtn: '✅ Confirmar Baixa',
+    cancelBtn: 'Cancelar',
+    tooFewPoints: 'Faltam {remaining} pontos para confirmar (mínimo 100)',
+    noCardsLeft: 'Não é possível esvaziar a mão sem ter uma canastra',
+    meldPts: '({pts} pts)',
+    selectFromHand: 'Sua mão — {count} selecionada(s):',
+    invalidMeld: 'Combinação inválida — a seleção não forma um grupo ou sequência válido',
+    needAtLeast3: 'Selecione pelo menos 3 cartas para preparar uma combinação',
+    removeMeld: 'Remover esta combinação',
+    handEmpty: 'Todas as cartas foram preparadas',
   },
 
   // Erros de validação de combinações (chaves enviadas pelo servidor)

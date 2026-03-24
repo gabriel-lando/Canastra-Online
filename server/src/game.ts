@@ -410,6 +410,83 @@ export class Game {
     return { success: true };
   }
 
+  layDownMultiple(playerId: string, meldDefs: { cardIds: string[]; meldType: MeldType }[]): { success: boolean; error?: string } {
+    const gs = this.state.public;
+    const current = this.getCurrentPlayer();
+    if (!current || current.id !== playerId) return { success: false, error: 'errors.notYourTurn' };
+    if (gs.turnPhase === 'mustDraw') return { success: false, error: 'errors.mustDrawFirst' };
+    if (meldDefs.length === 0) return { success: false, error: 'errors.cardsNotInHand' };
+
+    const team = gs.teams[current.teamId];
+
+    // Collect all card IDs, checking for duplicates across melds
+    const allUsedIds = new Set<string>();
+    const resolvedMelds: { cards: Card[]; meldType: MeldType }[] = [];
+
+    for (const def of meldDefs) {
+      for (const id of def.cardIds) {
+        if (allUsedIds.has(id)) return { success: false, error: 'errors.cardsNotInHand' };
+        allUsedIds.add(id);
+      }
+      const cards = def.cardIds.map((id) => current.hand.find((c: Card) => c.id === id)).filter(Boolean) as Card[];
+      if (cards.length !== def.cardIds.length) return { success: false, error: 'errors.cardsNotInHand' };
+
+      const validation = def.meldType === 'group' ? validateGroup(cards) : validateSequence(cards);
+      if (!validation.valid) return { success: false, error: validation.reason };
+
+      resolvedMelds.push({ cards, meldType: def.meldType });
+    }
+
+    // Validate first lay-down rules (works for both inHole and regular)
+    if (!team.hasLaidDown) {
+      const err = this.validateFirstLayDown(
+        current.teamId,
+        resolvedMelds.map((m) => m.cards),
+      );
+      if (err) return { success: false, error: err };
+    }
+
+    // Enforce minimum-hand rule: without creating a canasta, at least 1 card must remain
+    const willCreateCanasta = resolvedMelds.some((m) => classifyCanasta(m.cards, m.meldType).isCanasta);
+    const willHaveCanasta = team.hasCanasta || willCreateCanasta;
+    const remainingCount = current.hand.length - allUsedIds.size;
+    if (!willHaveCanasta && remainingCount < 1) {
+      return { success: false, error: 'errors.noCanastaNeedCard' };
+    }
+
+    // Apply all melds atomically
+    team.hasLaidDown = true;
+    for (const def of resolvedMelds) {
+      const { isCanasta, isClean } = classifyCanasta(def.cards, def.meldType);
+      const orderedCards = def.meldType === 'sequence' ? sortSequenceCards(def.cards) : def.cards;
+      const meld: Meld = {
+        id: uuidv4(),
+        type: def.meldType,
+        cards: orderedCards,
+        teamId: current.teamId,
+        isCanasta,
+        isCleanCanasta: isClean,
+      };
+      team.melds.push(meld);
+      if (isCanasta) team.hasCanasta = true;
+    }
+
+    // Remove used cards from hand
+    current.hand = current.hand.filter((c: Card) => !allUsedIds.has(c.id));
+    current.handCount = current.hand.length;
+    this.updateSyncedPlayer(current);
+
+    // Auto go-out: team has a canasta and player played every card
+    if (team.hasCanasta && current.hand.length === 0) {
+      gs.lastAction = { key: 'action.laidDownAndWentOut', params: { name: current.name } };
+      this.endRound(current.teamId);
+      return { success: true };
+    }
+
+    gs.lastAction = { key: 'action.laidDownMultiple', params: { name: current.name, count: resolvedMelds.length } };
+    return { success: true };
+  }
+
   private addToExistingMeld(player: PlayerPrivate, team: TeamState, cards: Card[], meldId: string): { success: boolean; error?: string } {
     const meld = team.melds.find((m: Meld) => m.id === meldId);
     if (!meld) return { success: false, error: 'errors.meldNotFound' };

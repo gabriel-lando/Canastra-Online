@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { GameState, Player } from '../types';
 import { useTranslation } from '../i18n';
+import { TeamSettingsModal } from './TeamSettingsModal';
 
 function useIsTouchDevice() {
   const [isTouch, setIsTouch] = useState(false);
@@ -23,9 +24,10 @@ interface LobbyProps {
   onRenameTeam: (teamId: 0 | 1, name: string) => void;
   onSwapTeamOrder: (publicIdA: string, publicIdB: string) => void;
   onForceStart: () => void;
+  onUpdateTeamSettings?: (teamId: 0 | 1, startingScore: number) => void;
 }
 
-export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, onReady, onUnready, onSelectTeam, onMovePlayer, onKickPlayer, onRenameTeam, onSwapTeamOrder, onForceStart }) => {
+export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, onReady, onUnready, onSelectTeam, onMovePlayer, onKickPlayer, onRenameTeam, onSwapTeamOrder, onForceStart, onUpdateTeamSettings }) => {
   const { t, interpolate } = useTranslation();
   const isTouchDevice = useIsTouchDevice();
   const me = gameState.players.find((p) => p.publicId === myPublicId);
@@ -59,6 +61,8 @@ export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, o
     return () => document.removeEventListener('mousedown', handler);
   }, [showHint]);
   const teamNames = gameState.teamNames ?? [t.lobby.defaultTeamA, t.lobby.defaultTeamB];
+  const [settingsOpenFor, setSettingsOpenFor] = useState<null | 0 | 1>(null);
+  const isDev = import.meta.env.DEV;
 
   const handleDragStart = (e: React.DragEvent, publicId: string, fromTeam: 0 | 1) => {
     e.dataTransfer.setData('publicId', publicId);
@@ -173,6 +177,7 @@ export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, o
           onTeamTap={() => handleTeamTap(0)}
           onKick={onKickPlayer}
           onRenameTeam={(name) => onRenameTeam(0, name)}
+          onOpenSettings={isDev ? () => setSettingsOpenFor(0) : undefined}
         />
         <div className="teams-vs">{t.lobby.vs}</div>
         <TeamPanel
@@ -198,6 +203,7 @@ export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, o
           onTeamTap={() => handleTeamTap(1)}
           onKick={onKickPlayer}
           onRenameTeam={(name) => onRenameTeam(1, name)}
+          onOpenSettings={isDev ? () => setSettingsOpenFor(1) : undefined}
         />
       </div>
 
@@ -233,6 +239,17 @@ export const Lobby: React.FC<LobbyProps> = ({ gameState, myPublicId, roomCode, o
           </div>
         ))}
       </div>
+      {settingsOpenFor !== null && (
+        <TeamSettingsModal
+          open={true}
+          teamId={settingsOpenFor}
+          teamName={teamNames[settingsOpenFor]}
+          score={gameState.teams[settingsOpenFor].score}
+          editable={gameState.leaderId === myPublicId}
+          onClose={() => setSettingsOpenFor(null)}
+          onSave={(teamId, startingScore) => onUpdateTeamSettings?.(teamId, startingScore)}
+        />
+      )}
     </div>
   );
 };
@@ -257,6 +274,7 @@ interface TeamPanelProps {
   onTeamTap: () => void;
   onKick: (publicId: string) => void;
   onRenameTeam: (name: string) => void;
+  onOpenSettings?: () => void;
 }
 
 const TeamPanel: React.FC<TeamPanelProps> = ({
@@ -279,6 +297,7 @@ const TeamPanel: React.FC<TeamPanelProps> = ({
   onTeamTap,
   onKick,
   onRenameTeam,
+  onOpenSettings,
 }) => {
   const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
@@ -310,7 +329,21 @@ const TeamPanel: React.FC<TeamPanelProps> = ({
             }
           : undefined
       }
+      style={{ position: 'relative' }}
     >
+      {onOpenSettings && (
+        <button
+          className="team-settings-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenSettings();
+          }}
+          title={isLeader ? (t.teamSettings?.editTooltip ?? 'Team settings') : (t.teamSettings?.viewTooltip ?? 'View team settings')}
+          aria-label={isLeader ? 'Edit team settings' : 'View team settings'}
+        >
+          {isLeader ? '⚙️' : 'ℹ️'}
+        </button>
+      )}
       {editing ? (
         <input
           className="team-name-input"

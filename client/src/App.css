@@ -179,6 +179,32 @@ body,
   max-width: 480px;
   box-shadow: var(--shadow);
 }
+.dev-starting-scores {
+  margin: 0.6rem 0 0.8rem;
+}
+.dev-starting-label {
+  display: block;
+  color: var(--gold);
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+.dev-starting-inputs {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.dev-starting-inputs input {
+  width: 88px;
+  padding: 0.35rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--gray-100);
+}
+.dev-vs {
+  color: var(--gray-300);
+  margin: 0 0.4rem;
+}
 .room-select-header {
   text-align: center;
   margin-bottom: 1.5rem;
@@ -634,6 +660,259 @@ body,
   }
 }
 
+/* ──────────────────────────────────────────
+   First Lay Down Modal (in-hole teams)
+────────────────────────────────────────── */
+.first-lay-open-btn {
+  font-size: 1rem;
+  padding: 0.55rem 1.4rem;
+  animation: pulse-gold 2s infinite;
+}
+@keyframes pulse-gold {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(201, 168, 76, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(201, 168, 76, 0);
+  }
+}
+
+.first-lay-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+}
+
+.first-lay-modal {
+  background: var(--gray-900);
+  border: 2px solid var(--gold);
+  border-radius: 16px;
+  width: min(780px, 100%);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}
+
+.first-lay-header {
+  padding: 1rem 1.25rem 0.6rem;
+  border-bottom: 1px solid rgba(201, 168, 76, 0.25);
+}
+.first-lay-header h2 {
+  color: var(--gold);
+  font-size: 1.35rem;
+  margin-bottom: 0.2rem;
+}
+.first-lay-subtitle {
+  color: var(--gray-300);
+  font-size: 0.85rem;
+}
+
+.first-lay-summary {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 0.55rem 1.25rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+.first-lay-total {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--red);
+  transition: color 0.2s;
+}
+.first-lay-total.first-lay-total-ok {
+  color: #48bb78;
+}
+.first-lay-needed {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--gray-300);
+  margin-left: 0.15rem;
+}
+.first-lay-remaining {
+  font-size: 0.85rem;
+  color: var(--gray-300);
+  margin-left: auto;
+}
+
+.first-lay-staged {
+  padding: 0.65rem 1.25rem 0.5rem;
+  min-height: 80px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  overflow-y: auto;
+  max-height: 230px;
+}
+.first-lay-staged-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gray-300);
+  margin-bottom: 0.5rem;
+}
+.first-lay-empty {
+  color: var(--gray-300);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+.first-lay-staged-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.first-lay-meld {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 0.4rem 0.65rem;
+}
+.first-lay-meld.first-lay-meld-canasta {
+  border-color: var(--gold);
+  background: rgba(201, 168, 76, 0.08);
+}
+.first-lay-meld-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+.first-lay-meld-type {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gray-100);
+}
+.first-lay-canasta-badge {
+  color: var(--gold);
+  font-size: 0.85rem;
+}
+.first-lay-meld-pts {
+  font-size: 0.8rem;
+  color: #48bb78;
+  font-weight: 600;
+}
+.first-lay-remove {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--gray-300);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  line-height: 1;
+}
+.first-lay-remove:hover {
+  color: var(--red);
+  background: rgba(229, 62, 62, 0.12);
+}
+.first-lay-meld-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.first-lay-hand {
+  padding: 0.65rem 1.25rem 0.4rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  overflow-y: auto;
+  flex: 1;
+  min-height: 110px;
+}
+.first-lay-hand-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gray-300);
+  margin-bottom: 0.45rem;
+}
+/* Make the modal's sort button small and discrete to match main hand */
+.first-lay-hand-label .btn-sort {
+  padding: 0.18rem 0.45rem;
+  font-size: 0.8rem;
+  border-radius: 4px;
+  background: transparent;
+  border: 1px solid var(--gray-600);
+  color: var(--gray-300);
+}
+.first-lay-hand-label .btn-sort:hover {
+  background: var(--gray-700);
+  color: var(--gold);
+}
+
+/* Prevent persistent hover/focus styles on touch devices (mobile) */
+@media (hover: none) {
+  .btn-ghost,
+  .btn-sort,
+  .first-lay-hand-label .btn-sort {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .btn-ghost:hover,
+  .first-lay-hand-label .btn-sort:hover {
+    /* don't apply hover visual on touch devices */
+    background: transparent !important;
+    color: var(--gray-300) !important;
+  }
+
+  .btn:focus {
+    outline: none;
+  }
+}
+.first-lay-hand-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.first-lay-stage-action {
+  padding: 0.5rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.02);
+}
+.first-lay-error {
+  color: var(--red);
+  font-size: 0.82rem;
+}
+
+.first-lay-footer {
+  padding: 0.65rem 1.25rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.first-lay-warnings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-height: 1rem;
+}
+.first-lay-warn {
+  color: #f6ad55;
+  font-size: 0.82rem;
+}
+.first-lay-buttons {
+  display: flex;
+  gap: 0.65rem;
+  justify-content: flex-end;
+}
+
+/* ──────────────────────────────────────────
+   End First Lay Down Modal
+────────────────────────────────────────── */
+
 .app {
   min-height: 100vh;
   display: flex;
@@ -707,6 +986,100 @@ body,
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+/* Ensure relative positioning for absolute controls */
+.team-panel {
+  position: relative;
+}
+
+.team-settings-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--gold);
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+  box-shadow: none;
+}
+.team-settings-btn:hover {
+  background: rgba(201, 168, 76, 0.12);
+}
+
+/* Team settings modal (small, dev-only) */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 800;
+}
+.modal.team-settings-modal {
+  background: var(--gray-900);
+  border: 2px solid var(--gold);
+  color: var(--gray-100);
+  border-radius: 12px;
+  padding: 1rem 1rem;
+  min-width: 300px;
+  max-width: 420px;
+  box-shadow: var(--shadow-sm);
+}
+.modal.team-settings-modal h3 {
+  color: var(--gold);
+  margin-bottom: 0.6rem;
+}
+.modal.team-settings-modal .modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.modal.team-settings-modal label {
+  color: var(--gray-300);
+  font-weight: 700;
+}
+.modal.team-settings-modal input[type='number'] {
+  padding: 0.5rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--gray-100);
+}
+.modal.team-settings-modal .settings-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.modal.team-settings-modal .settings-label {
+  color: var(--gray-300);
+  font-weight: 700;
+  min-width: 120px;
+}
+.modal.team-settings-modal .settings-input {
+  width: 120px;
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--gray-100);
+}
+.muted {
+  color: var(--gray-400);
+  font-size: 0.9rem;
+}
+.modal.team-settings-modal .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
 }
 .team-panel-0 {
   border-color: #63b3ed;
@@ -1249,6 +1622,24 @@ body,
 .btn-ghost:hover {
   background: var(--gray-700);
   color: var(--gold);
+}
+
+/* Small sort button base (used in hand and modal) */
+.btn-sort {
+  padding: 0.18rem 0.45rem;
+  font-size: 0.8rem;
+  border-radius: 4px;
+  transition:
+    transform 0.12s ease,
+    background 0.12s ease,
+    color 0.12s ease;
+}
+
+/* Active/tap animation for sort buttons (applies to all devices) */
+.btn-sort:active {
+  transform: scale(0.95);
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--gold) !important;
 }
 .hand-cards {
   display: flex;

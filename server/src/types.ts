@@ -92,9 +92,11 @@ export type ClientMessage =
   | { type: 'drawFromStock' }
   | { type: 'takeDiscard' }
   | { type: 'layDown'; cardIds: string[]; meldType?: MeldType; targetMeldId?: string }
+  | { type: 'layDownMultiple'; melds: { cardIds: string[]; meldType: MeldType }[] }
   | { type: 'addToMeld'; meldId: string; cardIds: string[] }
   | { type: 'discard'; cardId: string }
   | { type: 'goOut'; discardCardId?: string } // bater
+  | { type: 'updateTeamSettings'; teamId: 0 | 1; startingScore: number }
   | { type: 'nextRound' } // leader only
   | { type: 'ping' };
 

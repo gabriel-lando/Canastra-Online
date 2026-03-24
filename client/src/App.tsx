@@ -314,6 +314,7 @@ function App() {
           onRenameTeam={(teamId, name) => send({ type: 'renameTeam', teamId, name })}
           onSwapTeamOrder={(publicIdA, publicIdB) => send({ type: 'swapTeamOrder', publicIdA, publicIdB })}
           onForceStart={() => send({ type: 'forceStart' })}
+          onUpdateTeamSettings={(teamId, startingScore) => send({ type: 'updateTeamSettings', teamId, startingScore })}
         />
       )}
 
@@ -348,6 +349,7 @@ function App() {
             onDrawFromStock={() => send({ type: 'drawFromStock' })}
             onTakeDiscard={() => send({ type: 'takeDiscard' })}
             onLayDown={(cardIds) => send({ type: 'layDown', cardIds })}
+            onLayDownMultiple={(melds) => send({ type: 'layDownMultiple', melds })}
             onAddToMeld={(meldId, cardIds) => send({ type: 'addToMeld', meldId, cardIds })}
             onDiscard={(cardId) => send({ type: 'discard', cardId })}
             onGoOut={(discardCardId) => send({ type: 'goOut', discardCardId })}

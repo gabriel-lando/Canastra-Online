@@ -437,6 +437,47 @@ wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
         break;
       }
 
+      case 'layDownMultiple': {
+        const r = room.game.layDownMultiple(playerId, msg.melds);
+        if (!r.success) {
+          send(ws, { type: 'error', message: r.error! });
+          return;
+        }
+        broadcastRoom();
+        break;
+      }
+
+      case 'updateTeamSettings': {
+        // Development-only: allow the room leader to update per-team starting score while in the lobby
+        if (!isLeader) {
+          send(ws, { type: 'error', message: 'errors.leaderOnlyRename' });
+          return;
+        }
+        if (room.game.getPhase() !== 'lobby') {
+          send(ws, { type: 'error', message: 'errors.notInLobby' });
+          return;
+        }
+        if (process.env.NODE_ENV === 'production') {
+          send(ws, { type: 'error', message: 'errors.roomNotFound' });
+          return;
+        }
+        const teamId = msg.teamId;
+        const score = Number(msg.startingScore);
+        if (Number.isNaN(score) || score < 0) {
+          send(ws, { type: 'error', message: 'errors.roomNotFound' });
+          return;
+        }
+        try {
+          const gs = room.game.getPublicState();
+          gs.teams[teamId].score = Math.max(0, Math.floor(score));
+          gs.teams[teamId].inHole = gs.teams[teamId].score >= 1000;
+        } catch (e) {
+          // ignore unexpected
+        }
+        broadcastRoom();
+        break;
+      }
+
       case 'addToMeld': {
         const r = room.game.layDown(playerId, msg.cardIds, 'group', msg.meldId);
         if (!r.success) {

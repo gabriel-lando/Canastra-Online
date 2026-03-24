@@ -132,6 +132,38 @@ export interface Translations {
   lang: {
     switchTo: string;
   };
+  firstLayDown: {
+    openBtn: string;
+    openBtnHint: string;
+    title: string;
+    subtitle: string;
+    total: string;
+    remaining: string;
+    stagedLabel: string;
+    noMelds: string;
+    stageBtn: string;
+    sortBtn: string;
+    sortHand: string;
+    confirmBtn: string;
+    cancelBtn: string;
+    tooFewPoints: string;
+    noCardsLeft: string;
+    meldPts: string;
+    selectFromHand: string;
+    invalidMeld: string;
+    needAtLeast3: string;
+    removeMeld: string;
+    handEmpty: string;
+  };
+  teamSettings: {
+    editTooltip: string;
+    viewTooltip: string;
+    title: string;
+    initialScoreLabel: string;
+    save: string;
+    close: string;
+    readOnlyInfo: string;
+  };
   action: {
     roundStarted: string;
     drewLastCard: string;
@@ -139,6 +171,7 @@ export interface Translations {
     tookDiscard: string;
     laidDownAndWentOut: string;
     laidDown: string;
+    laidDownMultiple: string;
     addedToMeldAndWentOut: string;
     addedToMeld: string;
     discardedAndWentOut: string;
@@ -363,6 +396,15 @@ export const en: Translations = {
   lang: {
     switchTo: 'Switch language',
   },
+  teamSettings: {
+    editTooltip: 'Edit team settings',
+    viewTooltip: 'View team settings',
+    title: 'Team Settings',
+    initialScoreLabel: 'Initial score',
+    save: 'Save',
+    close: 'Close',
+    readOnlyInfo: 'Only the leader can change this setting',
+  },
 
   // Game action log
   action: {
@@ -372,6 +414,7 @@ export const en: Translations = {
     tookDiscard: '{name} took the discard pile ({count} cards)',
     laidDownAndWentOut: '{name} laid down and went out! Round over.',
     laidDown: '{name} laid down a {type}',
+    laidDownMultiple: '{name} laid down {count} meld(s)',
     addedToMeldAndWentOut: '{name} added to a meld and went out! Round over.',
     addedToMeld: '{name} added to a {type}',
     discardedAndWentOut: '{name} discarded and went out! Round over.',
@@ -380,6 +423,31 @@ export const en: Translations = {
     wentOut: '{name} went out! Round over.',
     meldGroup: 'group',
     meldSequence: 'sequence',
+  },
+
+  // First lay-down modal (in-hole teams)
+  firstLayDown: {
+    openBtn: '🃏 Plan First Lay Down (≥100 pts)',
+    openBtnHint: 'Click the plan button to prepare your first lay down, or discard a card to end your turn.',
+    title: '🃏 First Lay Down',
+    subtitle: 'Your team is in the hole! Your first lay down must total at least 100 points.',
+    total: 'Total: {pts} pts',
+    remaining: '{count} card(s) remaining in hand',
+    stagedLabel: 'Staged melds:',
+    noMelds: 'Select cards from your hand and click "Stage" to add melds here.',
+    stageBtn: '+ Stage as Meld',
+    sortBtn: '⇅ Sort',
+    sortHand: 'Sort hand',
+    confirmBtn: '✅ Confirm Lay Down',
+    cancelBtn: 'Cancel',
+    tooFewPoints: 'Need {remaining} more points to confirm (minimum 100)',
+    noCardsLeft: 'Cannot empty your hand without having a canasta',
+    meldPts: '({pts} pts)',
+    selectFromHand: 'Your hand — {count} selected:',
+    invalidMeld: 'Invalid meld — selection is not a valid group or sequence',
+    needAtLeast3: 'Select at least 3 cards to stage a meld',
+    removeMeld: 'Remove this meld',
+    handEmpty: 'All cards have been staged',
   },
 
   // Meld validation errors (keyed by server reason strings)

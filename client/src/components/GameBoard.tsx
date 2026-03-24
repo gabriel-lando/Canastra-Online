@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import type { Card, GameState } from '../types';
+import type { Card, GameState, MeldType } from '../types';
 import { CardView } from './CardView';
+import { Hand } from './Hand';
 import { MeldView } from './MeldView';
+import { FirstLayDownModal } from './FirstLayDownModal';
 import { isMyTurn, detectMeldType } from '../socket';
 import { useTranslation } from '../i18n';
 import type { Translations } from '../i18n/locales/en';
@@ -29,14 +31,16 @@ interface GameBoardProps {
   onDrawFromStock: () => void;
   onTakeDiscard: () => void;
   onLayDown: (cardIds: string[]) => void;
+  onLayDownMultiple: (melds: { cardIds: string[]; meldType: MeldType }[]) => void;
   onAddToMeld: (meldId: string, cardIds: string[]) => void;
   onDiscard: (cardId: string) => void;
   onGoOut: (discardCardId?: string) => void;
 }
 
-export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicId, onDrawFromStock, onTakeDiscard, onLayDown, onAddToMeld, onDiscard, onGoOut: _onGoOut }) => {
+export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicId, onDrawFromStock, onTakeDiscard, onLayDown, onLayDownMultiple, onAddToMeld, onDiscard, onGoOut: _onGoOut }) => {
   const { t, interpolate } = useTranslation();
   const [selectedCardIds, setSelectedCardIds] = useState<Set<string>>(new Set());
+  const [showFirstLayModal, setShowFirstLayModal] = useState(false);
   const [discardExpanded, setDiscardExpanded] = useState(false);
   const [visibleDiscardCount, setVisibleDiscardCount] = useState(1);
   const [newCardIds, setNewCardIds] = useState<Set<string>>(new Set());
@@ -72,6 +76,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicI
   const myTurn = isMyTurn(gameState, myPublicId);
   const me = gameState.players.find((p) => p.publicId === myPublicId);
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+  const myTeam = me !== undefined ? gameState.teams[me.teamId] : null;
+  const isInHoleFirstLay = myTurn && gameState.turnPhase !== 'mustDraw' && !!myTeam?.inHole && !myTeam?.hasLaidDown;
 
   const toggleCard = (cardId: string) => {
     setSelectedCardIds((prev) => {
@@ -186,6 +192,19 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicI
 
   return (
     <div className="game-board">
+      {/* First Lay Down modal (inHole teams only, visible only to the current player) */}
+      {showFirstLayModal && myTeam && (
+        <FirstLayDownModal
+          hand={displayHand}
+          team={myTeam}
+          onConfirm={(melds) => {
+            setShowFirstLayModal(false);
+            onLayDownMultiple(melds);
+          }}
+          onClose={() => setShowFirstLayModal(false)}
+        />
+      )}
+
       {/* Header */}
       <div className="game-header">
         <div className="score-display">
@@ -352,21 +371,19 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicI
             </button>
           </div>
         </div>
-        <div className="hand-cards">
-          {displayHand.map((card, idx) => (
-            <div
-              key={card.id}
-              draggable
-              onDragStart={(e) => handleDragStart(e, idx, card.id)}
-              onDragOver={(e) => handleDragOver(e, idx)}
-              onDrop={(e) => handleDrop(e, idx)}
-              onDragEnd={handleDragEnd}
-              className={`card-drag-wrapper${dragIdx === idx ? ' card-dragging' : ''}${dragOverIdx === idx && dragIdx !== idx ? ' card-drag-over' : ''}`}
-            >
-              <CardView card={card} selected={selectedCardIds.has(card.id)} highlighted={newCardIds.has(card.id)} onClick={() => toggleCard(card.id)} />
-            </div>
-          ))}
-        </div>
+        <Hand
+          cards={displayHand}
+          selectedIds={selectedCardIds}
+          onCardClick={(id) => toggleCard(id)}
+          draggable
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          onDragEnd={handleDragEnd}
+          dragIdx={dragIdx}
+          dragOverIdx={dragOverIdx}
+          highlightIds={newCardIds}
+        />
 
         {/* Action buttons */}
         {myTurn && (
@@ -386,7 +403,16 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicI
 
             {gameState.turnPhase !== 'mustDraw' && (
               <div className="action-group">
-                {selectedCardIds.size >= 3 &&
+                {/* In-Hole first lay down: show the modal button instead of regular Lay Down */}
+                {isInHoleFirstLay && (
+                  <button className="btn btn-primary first-lay-open-btn" onClick={() => setShowFirstLayModal(true)}>
+                    {t.firstLayDown.openBtn}
+                  </button>
+                )}
+
+                {/* Regular lay down (hidden when inHole and not yet laid down) */}
+                {!isInHoleFirstLay &&
+                  selectedCardIds.size >= 3 &&
                   (() => {
                     const selectedCards = hand.filter((c) => selectedCardIds.has(c.id));
                     const detected = detectMeldType(selectedCards);
@@ -397,12 +423,14 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, hand, myPublicI
                       </button>
                     );
                   })()}
+
                 {selectedCardIds.size === 1 && (
                   <button className="btn btn-warning" onClick={() => handleDiscard([...selectedCardIds][0])}>
                     {t.game.discardSelected}
                   </button>
                 )}
-                {selectedCardIds.size === 0 && <span className="hint">{t.game.selectHint}</span>}
+                {!isInHoleFirstLay && selectedCardIds.size === 0 && <span className="hint">{t.game.selectHint}</span>}
+                {isInHoleFirstLay && selectedCardIds.size === 0 && <span className="hint">{t.firstLayDown.openBtnHint}</span>}
               </div>
             )}
           </div>
